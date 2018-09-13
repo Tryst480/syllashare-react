@@ -1,10 +1,8 @@
 import React from 'react';
-import Button from '@material-ui/core/Button';
+import Authenticator from './auth/Authenticator'
 
 const App = () => (
-  <Button variant="contained" color="primary">
-    Hello World
-  </Button>
+  <Authenticator />
 );
 
 export default App;
