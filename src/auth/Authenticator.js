@@ -9,6 +9,7 @@ import { Auth } from 'aws-amplify';
 import { GcpExports, AwsExports } from '../cloud/CloudExports';
 import GoogleLogin from 'react-google-login';
 import AWS from 'aws-sdk';
+import BackendExports from '../BackendExports';
 
 const styles = theme => ({
     root: {
@@ -27,6 +28,13 @@ const styles = theme => ({
     },
     progress: {
         margin: theme.spacing.unit * 2,
+    },
+    googleLogin: {
+        background: 'white',
+        width: 'auto',
+        height: 'auto',
+        'border-width': '0px',
+        'margin-bottom': '8px'
     }
 });
 
@@ -61,11 +69,13 @@ class Authenticator extends Component {
                 console.log("REFRESHED");
                 this.setState({loading: false});
                 this.getSyllaToken().then((syllaToken) => {
-                    fetch('./api/checktoken', 
+                    fetch(BackendExports.Url + '/api/verifytoken', 
                     {
-                        headers: {
-                            "Authorization": syllaToken
-                        }
+                        method: 'POST',
+                        headers: new Headers({
+                            "authorization": syllaToken
+                        }),
+                        credentials: 'include'
                     })
                     .then((response) => {
                         if(response.ok) {
@@ -118,7 +128,7 @@ class Authenticator extends Component {
             this.apigClient.exchangetokenPut(params, body, additionalParams)
                 .then((result) => {
                     console.log("GOT RESP: ", JSON.stringify(result));
-                    resolve(result.token);
+                    resolve(result.data["token"]);
                 }).catch((err, msg) => {
                     console.log("ExchangeToken Error: " + JSON.stringify(err));
                     reject(err);
@@ -214,6 +224,7 @@ class Authenticator extends Component {
                         Join SyllaShare!
                     </Typography>
                     <GoogleLogin
+                        className={classes.googleLogin}
                         clientId={GcpExports.clientID}
                         responseType="code"
                         accessType="offline"
