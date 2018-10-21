@@ -2,7 +2,9 @@ import React from 'react';
 import Authenticator from './auth/Authenticator'
 
 const App = () => (
-  <Authenticator />
+  <Authenticator onAuthenticated={(syllaToken) => {
+    
+  }}/>
 );
 
 export default App;
