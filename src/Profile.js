@@ -19,16 +19,10 @@ const styles = theme => ({
   textField: {
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
-    width: 200,
-  },
-  dense: {
-    marginTop: 19,
-  },
-  menu: {
-    width: 200,
+    width: 300,
   },
   blueAvatar: {
-    margin: 50,
+    margin: 30,
     color: '#fff',
     backgroundColor: blue[500],
   },
