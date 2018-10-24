@@ -3,7 +3,7 @@ import Authenticator from './auth/Authenticator'
 
 const App = () => (
   <Authenticator onAuthenticated={(syllaToken) => {
-    
+    console.log("IM AUTHENTICATED: ", syllaToken);
   }}/>
 );
 

@@ -1,5 +1,5 @@
 const BackendExports = {
-    Url: "http://13.77.150.149"
+    Url: "http://52.39.57.91"
 };
 
 export default BackendExports;
