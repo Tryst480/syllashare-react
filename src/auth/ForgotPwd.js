@@ -4,7 +4,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import PropTypes from 'prop-types';
 import Amplify from '@aws-amplify/core';
 import { Auth } from 'aws-amplify';
-import AwsExports from '../aws/AwsExports';
+import { AwsExports } from '../cloud/CloudExports';
 
 // in this way you are only importing Auth and configuring it.
 Amplify.configure(AwsExports);

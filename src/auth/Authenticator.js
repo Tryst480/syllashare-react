@@ -5,10 +5,11 @@ import Login from './Login';
 import SignUp from './SignUp';
 import Code from './Code';
 import ForgotPwd from './ForgotPwd';
-import Amplify from '@aws-amplify/core';
 import { Auth } from 'aws-amplify';
-import AwsExports from '../aws/AwsExports';
-import DeleteRoundedIcon from '@material-ui/icons/';
+import { GcpExports, AwsExports } from '../cloud/CloudExports';
+import GoogleLogin from 'react-google-login';
+import AWS from 'aws-sdk';
+import BackendExports from '../BackendExports';
 
 const styles = theme => ({
     root: {
@@ -27,6 +28,13 @@ const styles = theme => ({
     },
     progress: {
         margin: theme.spacing.unit * 2,
+    },
+    googleLogin: {
+        background: 'white',
+        width: 'auto',
+        height: 'auto',
+        'border-width': '0px',
+        'margin-bottom': '8px'
     }
 });
 
@@ -34,8 +42,9 @@ class Authenticator extends Component {
     constructor(props) {
         super();
         this.state = {
+            provider: null,
+            syllaToken: null,
             loading: true,
-            user: null,
             viewLogin: false,
             viewSignUp: false,
             viewForgotPwd: false,
@@ -43,38 +52,204 @@ class Authenticator extends Component {
         };
     }
 
+    //Called on component initialization
     componentWillMount() {
-        Auth.currentAuthenticatedUser()
-            .then(user => {
-                console.log("USER: ", user);
-                this.setState({loading: false, user: user});
-            })
-            .catch(err => {
-                console.log("USER NULL");
-                this.setState({loading: false});
+        //Wait for google login to load
+        window.gapi.load('auth2', () => 
+        { 
+            this.gAuth = window.gapi.auth2.init({
+                client_id: GcpExports.clientID
             });
+            this.gAuth.then(() => {
+                //Check if a google user is logged in
+                this.googleSignIn().catch(() => {
+                    this.userPoolSignIn().catch(() => {
+                        this.signIn(null, null).catch((err) => {
+                            console.log("No sign in methods worked!");
+                        });
+                    });
+                });
+            }, (e) => {
+                console.error("Google auth error: ", e);
+            })
+        });
     }
 
-    onSignIn(user, error) {
+    onGoogleSignIn(gs) {
+        this.gAuth.isSignedIn.listen(() => {
+            this.googleSignIn().then((syllaToken) => {
+                fetch(BackendExports.Url + '/api/exchangegoogle', 
+                {
+                    method: 'POST',
+                    headers: new Headers({
+                        "authorization": syllaToken
+                    }),
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        code: gs.code
+                    })
+                })
+                .then((response) => {
+                    if (response.ok) {
+                        console.log("REFRESH TOKEN SUBMITTED");
+                    }
+                })
+            }).catch((e) => {
+                console.error("Google Sign in failed: ", e)
+            });
+        });
+    }
+
+    googleSignIn() {
+        return new Promise((resolve, reject) => {
+            this.gAuth = window.gapi.auth2.getAuthInstance();
+            if (this.gAuth.isSignedIn.get()) {
+                var user = this.gAuth.currentUser.get();
+                var idToken = user.getAuthResponse().id_token;
+                //Sign in using saved id token
+                this.signIn("accounts.google.com", idToken).then((syllaToken) => {
+                    resolve(syllaToken);
+                }).catch((err) => {
+                    reject(err);
+                });
+            } else {
+                reject();
+            }
+        });
+    }
+    
+    onUserPoolSignIn(user, error) {
         if (error != null) {
             console.log("Sign in failed... Redirecting to login");
             this.setState({ viewLogin: true, viewSignUp: false, viewForgotPwd: false, codeConfig: null });
             return;
         }
-        console.log("LOGGIN IN");
-        this.setState({ user: user, viewLogin: false, viewSignUp: false, viewForgotPwd: false, codeConfig: null });
+        this.userPoolSignIn().then(() => {
+            this.setState({ viewLogin: false, viewSignUp: false, viewForgotPwd: false, codeConfig: null });
+        }).catch((err) => {
+            this.setState({ viewLogin: true, viewSignUp: false, viewForgotPwd: false, codeConfig: null });
+        });
+    }
+
+    userPoolSignIn() {
+        return new Promise((resolve, reject) => {
+            Auth.currentSession()
+            .then(session => {
+                this.signIn("cognito-idp.us-west-2.amazonaws.com/us-west-2_y61gBo6cv", session.idToken.getJwtToken()).then((syllaToken) => {
+                    resolve(syllaToken);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    signIn(provider, token) {
+        return new Promise((resolve, reject) => {
+            this.fedSignIn(provider, token).then(() => {
+                this.getSyllaToken().then((syllaToken) => {
+                    this.setState({
+                        loading: false,
+                        provider: provider,
+                        syllaToken: syllaToken
+                    });
+                    this.props.onAuthenticated(syllaToken, provider);
+                    resolve(syllaToken);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    //Exchanges federated identity token for a syllashare token that is easier for the backend to use
+    getSyllaToken() {
+        return new Promise((resolve, reject) => {
+            console.log("ACCESSKEY: ", AWS.config.credentials.accessKeyId);
+            console.log("SECRETKEY: ", AWS.config.credentials.secretAccessKey);
+            console.log("SESSION TOKEN: ", AWS.config.credentials.sessionToken);
+            //Special client to communicate with API Gateway that invokes our Lambda functions
+            this.apigClient = window.apigClientFactory.newClient({
+                "accessKey": AWS.config.credentials.accessKeyId,
+                "secretKey": AWS.config.credentials.secretAccessKey,
+                "sessionToken": AWS.config.credentials.sessionToken,
+                "region": "us-west-2",
+                "syllaToken": null
+            });
+            var params = {};
+            var body = {};
+            var additionalParams = {
+                headers: {},
+                queryParams: {}
+            };
+
+            this.apigClient.exchangetokenPut(params, body, additionalParams)
+                .then((result) => {
+                    console.log("GOT RESP: ", JSON.stringify(result));
+                    resolve(result.data["token"]);
+                }).catch((err, msg) => {
+                    console.log("ExchangeToken Error: " + JSON.stringify(err));
+                    reject(err);
+                });
+            });
+    }
+
+    fedSignIn(provider, token) {
+        return new Promise((resolve, reject) => {
+            AWS.config.region = AwsExports.Auth.region;
+            var authConfig = {
+                IdentityPoolId: AwsExports.Auth.identityPoolId
+            }
+            if (provider != null && token != null) {
+                var logins = {}
+                logins[provider] = token
+                authConfig["Logins"] = logins
+            }
+            console.log("AUTH CONFIG: ", JSON.stringify(authConfig));
+            AWS.config.credentials = new AWS.CognitoIdentityCredentials(authConfig);
+            AWS.config.credentials.get(() => {
+                this.refresh().then(() => {
+                    resolve();
+                }).catch((e) => {
+                    reject(e);
+                });
+            });
+        });
+    }
+
+    refresh() {
+        return new Promise((resolve, reject) => {
+            AWS.config.credentials.refresh((err) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                
+                resolve();
+            })
+        });
     }
 
     onSignOut() {
         this.setState({loading: true});
-        Auth.signOut()
+        if (this.gAuth.isSignedIn.get()) {
+            this.gAuth.signOut().then(() => {
+                this.signIn(null, null);
+            });
+        } else {
+            Auth.signOut()
             .then(data => {
-                this.setState({loading: false, user: null});
+                this.signIn(null, null);
             })
             .catch(err => {
                 console.error("SignOut Error: ", err);
                 this.setState({loading: false});
             });
+        }
     }
 
     renderLoggedIn() {
@@ -82,7 +257,7 @@ class Authenticator extends Component {
         return (<div className={classes.root}>
             <Paper className={classes.paper} onClick={() => {this.setState({ viewLogin: false, viewSignUp: false, viewForgotPwd: false, codeConfig: null })}}>
                 <Typography variant="display1" gutterBottom>
-                    Hello {this.state.user.username}
+                    Hello
                 </Typography>
                 <Button variant="contained" onClick={this.onSignOut.bind(this)}>
                     Sign Out
@@ -116,6 +291,20 @@ class Authenticator extends Component {
                     <Typography variant="display1" gutterBottom>
                         Join SyllaShare!
                     </Typography>
+                    <GoogleLogin
+                        className={classes.googleLogin}
+                        clientId={GcpExports.clientID}
+                        responseType="code"
+                        accessType="offline"
+                        scope="profile email"
+                        uxMode="redirect"
+                        redirect_uri="postmessage"
+                        onSuccess={this.onGoogleSignIn.bind(this)}
+                        onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
+                        <Button variant="contained" color="primary">
+                            Google
+                        </Button>
+                    </GoogleLogin>
                     <br />
                     <Collapse in={!(this.state.viewLogin || this.state.viewSignUp)}>
                         <Grid container justify = "center" spacing={2}>
@@ -144,7 +333,7 @@ class Authenticator extends Component {
                 <br />
                 <Collapse in={this.state.viewLogin}>
                     <Paper elevation={4} className={classes.paper}>
-                        <Login onSignIn={this.onSignIn.bind(this)} onCode={(codeConfig) => { this.setState({ codeConfig: codeConfig, viewLogin: false }); }} />
+                        <Login onSignIn={this.onUserPoolSignIn.bind(this)} onCode={(codeConfig) => { this.setState({ codeConfig: codeConfig, viewLogin: false }); }} />
                         <br />
                         <Button variant="contained" onClick={() => { this.setState({ viewLogin: false, viewForgotPwd: true }); } }>
                             Forgot Password?
@@ -153,7 +342,7 @@ class Authenticator extends Component {
                 </Collapse>
                 <Collapse in={this.state.viewSignUp}>
                     <Paper elevation={4} className={classes.paper}>
-                        <SignUp onSignIn={this.onSignIn.bind(this)} onCode={(codeConfig) => { this.setState({ codeConfig: codeConfig, viewSignUp: false }); }} />
+                        <SignUp onSignIn={this.onUserPoolSignIn.bind(this)} onCode={(codeConfig) => { this.setState({ codeConfig: codeConfig, viewSignUp: false }); }} />
                     </Paper>
                 </Collapse>
                 <Collapse in={this.state.viewForgotPwd}>
@@ -163,7 +352,7 @@ class Authenticator extends Component {
                 </Collapse>
                 <Collapse in={this.state.codeConfig != null}>
                     <Paper elevation={4} className={classes.paper}>
-                        <Code onSignIn={this.onSignIn.bind(this)} config={this.state.codeConfig} />
+                        <Code onSignIn={this.onUserPoolSignIn.bind(this)} config={this.state.codeConfig} />
                     </Paper>
                 </Collapse>
             </div>
@@ -174,7 +363,7 @@ class Authenticator extends Component {
         const { classes } = this.props;
         if (this.state.loading) {
             return <CircularProgress className={classes.progress} size={50} />;
-        } else if (this.state.user != null) {
+        } else if (this.state.provider != null) {
             return this.renderLoggedIn();
         } else {
             return this.renderLoggedOut();

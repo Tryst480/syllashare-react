@@ -11,4 +11,8 @@ const AwsExports = {
     }
 };
 
-export default AwsExports;
+const GcpExports = {
+    clientID: "837401056296-40rotjiktq8dtecg24ligrqnp5hpiad3.apps.googleusercontent.com"
+};
+
+export { AwsExports, GcpExports };

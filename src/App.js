@@ -3,8 +3,9 @@ import Authenticator from './auth/Authenticator'
 import Profile from './Profile'
 
 const App = () => (
- <div> <Authenticator />
-  <Profile /> </div>
+  <Authenticator onAuthenticated={(syllaToken) => {
+    console.log("IM AUTHENTICATED: ", syllaToken);
+  }}/>
 );
 
 export default App;
