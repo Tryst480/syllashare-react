@@ -1,8 +1,12 @@
 import React, { Component } from 'react';
 import { Button, Grid, withStyles, Paper, Typography, Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
 import PropTypes from 'prop-types';
-import Authenticator from './auth/Authenticator';
-import Profile from './Profile';
+import BigCalendar from 'react-big-calendar-like-google';
+import moment from 'moment';
+ 
+BigCalendar.setLocalizer(
+  BigCalendar.momentLocalizer(moment)
+);
 
 const styles = theme => ({
     root: {
@@ -24,37 +28,33 @@ const styles = theme => ({
     }
 });
 
-class App extends Component {
+class Calendar extends Component {
     constructor(props) {
         super();
         this.state = {
-            syllaToken: null
+            
         };
     }
 
     componentWillMount() {
+        var params = {};
+        var body = {};
         
     }
 
     render() {
-      var authElms = <div />
-      if (this.state.syllaToken != null) {
-        authElms = (<div>
-          <Profile syllaToken={this.state.syllaToken}/>
+        return (<div>
+            <BigCalendar style={{ height: '700px' }}
+                events={[]}
+                step={60}
+                defaultDate={new Date(2015, 3, 1)}
+            />
         </div>);
-      }
-      return (<div>
-        <Authenticator onAuthenticated={(syllaToken) => {
-          console.log("ON AUTH: ", syllaToken);
-          this.setState({syllaToken: syllaToken});
-        }} />
-        {authElms}
-      </div>);
     }
 };
 
-App.propTypes = {
+Calendar.propTypes = {
     classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(App);
+export default withStyles(styles)(Calendar);
