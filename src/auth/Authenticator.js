@@ -5,11 +5,12 @@ import Login from './Login';
 import SignUp from './SignUp';
 import Code from './Code';
 import ForgotPwd from './ForgotPwd';
-import { Auth } from 'aws-amplify';
+import Amplify, { Auth, API } from 'aws-amplify';
 import { GcpExports, AwsExports } from '../cloud/CloudExports';
 import GoogleLogin from 'react-google-login';
-import AWS from 'aws-sdk';
 import BackendExports from '../BackendExports';
+
+Amplify.configure(AwsExports);
 
 const styles = theme => ({
     root: {
@@ -135,10 +136,8 @@ class Authenticator extends Component {
         return new Promise((resolve, reject) => {
             Auth.currentSession()
             .then(session => {
-                this.signIn("cognito-idp.us-west-2.amazonaws.com/us-west-2_y61gBo6cv", session.idToken.getJwtToken()).then((syllaToken) => {
+                this.getSyllaToken().then((syllaToken) => {
                     resolve(syllaToken);
-                }).catch((err) => {
-                    reject(err);
                 });
             }).catch((err) => {
                 reject(err);
@@ -148,7 +147,7 @@ class Authenticator extends Component {
 
     signIn(provider, token) {
         return new Promise((resolve, reject) => {
-            this.fedSignIn(provider, token).then(() => {
+            if (provider == null) {
                 this.getSyllaToken().then((syllaToken) => {
                     this.setState({
                         loading: false,
@@ -157,80 +156,37 @@ class Authenticator extends Component {
                     });
                     this.props.onAuthenticated(syllaToken, provider);
                     resolve(syllaToken);
-                }).catch((err) => {
-                    reject(err);
                 });
-            }).catch((err) => {
-                reject(err);
-            });
+            } else {
+                Auth.federatedSignIn(
+                    // Initiate federated sign-in with Google identity provider 
+                    provider,
+                    { 
+                        token: token
+                    }
+                ).then(() => {
+                    this.getSyllaToken().then((syllaToken) => {
+                        this.setState({
+                            loading: false,
+                            provider: provider,
+                            syllaToken: syllaToken
+                        });
+                        this.props.onAuthenticated(syllaToken, provider);
+                        resolve(syllaToken);
+                    });
+                });
+            }
         });
     }
 
     //Exchanges federated identity token for a syllashare token that is easier for the backend to use
     getSyllaToken() {
         return new Promise((resolve, reject) => {
-            console.log("ACCESSKEY: ", AWS.config.credentials.accessKeyId);
-            console.log("SECRETKEY: ", AWS.config.credentials.secretAccessKey);
-            console.log("SESSION TOKEN: ", AWS.config.credentials.sessionToken);
-            //Special client to communicate with API Gateway that invokes our Lambda functions
-            this.apigClient = window.apigClientFactory.newClient({
-                "accessKey": AWS.config.credentials.accessKeyId,
-                "secretKey": AWS.config.credentials.secretAccessKey,
-                "sessionToken": AWS.config.credentials.sessionToken,
-                "region": "us-west-2",
-                "syllaToken": null
+            API.put('SyllaShare', '/exchangetoken').then(response => {
+                resolve(response["token"]);
+            }).catch(error => {
+                console.log(error);
             });
-            var params = {};
-            var body = {};
-            var additionalParams = {
-                headers: {},
-                queryParams: {}
-            };
-
-            this.apigClient.exchangetokenPut(params, body, additionalParams)
-                .then((result) => {
-                    console.log("GOT RESP: ", JSON.stringify(result));
-                    resolve(result.data["token"]);
-                }).catch((err, msg) => {
-                    console.log("ExchangeToken Error: " + JSON.stringify(err));
-                    reject(err);
-                });
-            });
-    }
-
-    fedSignIn(provider, token) {
-        return new Promise((resolve, reject) => {
-            AWS.config.region = AwsExports.Auth.region;
-            var authConfig = {
-                IdentityPoolId: AwsExports.Auth.identityPoolId
-            }
-            if (provider != null && token != null) {
-                var logins = {}
-                logins[provider] = token
-                authConfig["Logins"] = logins
-            }
-            console.log("AUTH CONFIG: ", JSON.stringify(authConfig));
-            AWS.config.credentials = new AWS.CognitoIdentityCredentials(authConfig);
-            AWS.config.credentials.get(() => {
-                this.refresh().then(() => {
-                    resolve();
-                }).catch((e) => {
-                    reject(e);
-                });
-            });
-        });
-    }
-
-    refresh() {
-        return new Promise((resolve, reject) => {
-            AWS.config.credentials.refresh((err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                
-                resolve();
-            })
         });
     }
 

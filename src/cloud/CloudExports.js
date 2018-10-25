@@ -8,6 +8,15 @@ const AwsExports = {
         userPoolId: 'us-west-2_y61gBo6cv',
         // OPTIONAL - Amazon Cognito Web Client ID
         userPoolWebClientId: '6577lp27vp60r9r0mig03gf42g'
+    },
+    API: {
+        endpoints: [
+            {
+                name: "SyllaShare",
+                endpoint: "https://1inkjjj8ek.execute-api.us-west-2.amazonaws.com/Prod",
+                region: "us-west-2"
+            }
+        ]
     }
 };
 
