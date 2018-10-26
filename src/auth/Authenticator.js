@@ -5,7 +5,7 @@ import Login from './Login';
 import SignUp from './SignUp';
 import Code from './Code';
 import ForgotPwd from './ForgotPwd';
-import Amplify, { Auth, API } from 'aws-amplify';
+import Amplify, { Auth, API, Hub } from 'aws-amplify';
 import { GcpExports, AwsExports } from '../cloud/CloudExports';
 import GoogleLogin from 'react-google-login';
 import BackendExports from '../BackendExports';
@@ -53,6 +53,20 @@ class Authenticator extends Component {
         };
     }
 
+    initHubListener() {
+        var hubListener = {
+            onHubCapsule: (capsule) => {
+                switch (capsule.payload.event) {
+                    case 'signOut':
+                        this.onSignOut();
+                        break;
+                }
+            }
+        }
+
+        Hub.listen('auth', hubListener);
+    }
+
     //Called on component initialization
     componentWillMount() {
         //Wait for google login to load
@@ -74,6 +88,7 @@ class Authenticator extends Component {
                 console.error("Google auth error: ", e);
             })
         });
+        this.initHubListener();
     }
 
     onGoogleSignIn(gs) {
@@ -196,30 +211,8 @@ class Authenticator extends Component {
             this.gAuth.signOut().then(() => {
                 this.signIn(null, null);
             });
-        } else {
-            Auth.signOut()
-            .then(data => {
-                this.signIn(null, null);
-            })
-            .catch(err => {
-                console.error("SignOut Error: ", err);
-                this.setState({loading: false});
-            });
         }
-    }
-
-    renderLoggedIn() {
-        const { classes } = this.props;
-        return (<div className={classes.root}>
-            <Paper className={classes.paper} onClick={() => {this.setState({ viewLogin: false, viewSignUp: false, viewForgotPwd: false, codeConfig: null })}}>
-                <Typography variant="display1" gutterBottom>
-                    Hello
-                </Typography>
-                <Button variant="contained" onClick={this.onSignOut.bind(this)}>
-                    Sign Out
-                </Button>
-            </Paper>
-        </div>);
+        this.signIn(null, null);
     }
 
     renderLoggedOut() {
@@ -318,9 +311,16 @@ class Authenticator extends Component {
     render() {
         const { classes } = this.props;
         if (this.state.loading) {
-            return <CircularProgress className={classes.progress} size={50} />;
+            return (
+                <Grid container
+                spacing={0}
+                direction="column"
+                alignItems="center"
+                justify="center">
+                <CircularProgress className={classes.progress} size={50} />
+            </Grid>);
         } else if (this.state.provider != null) {
-            return this.renderLoggedIn();
+            return (<div />)
         } else {
             return this.renderLoggedOut();
         }

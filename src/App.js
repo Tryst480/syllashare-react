@@ -3,6 +3,7 @@ import { Button, Grid, withStyles, Paper, Typography, Grow, Collapse, Fade, Circ
 import PropTypes from 'prop-types';
 import Authenticator from './auth/Authenticator';
 import Profile from './Profile';
+import TopBar from './TopBar';
 
 const styles = theme => ({
     root: {
@@ -44,6 +45,8 @@ class App extends Component {
         </div>);
       }
       return (<div>
+        <TopBar />
+        <div style={{ height: '63px' }} />
         <Authenticator onAuthenticated={(syllaToken) => {
           console.log("ON AUTH: ", syllaToken);
           this.setState({syllaToken: syllaToken});

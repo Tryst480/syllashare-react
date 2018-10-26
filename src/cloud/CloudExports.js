@@ -17,6 +17,10 @@ const AwsExports = {
                 region: "us-west-2"
             }
         ]
+    },
+    Storage: {
+        bucket: 'syllasharedata', //REQUIRED -  Amazon S3 bucket
+        region: 'us-west-2', //OPTIONAL -  Amazon service region
     }
 };
 

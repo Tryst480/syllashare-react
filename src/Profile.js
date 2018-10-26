@@ -10,7 +10,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import { Button, Grid, Select, MenuItem } from '@material-ui/core';
+import { Button, Grid, Select, MenuItem, CircularProgress, Snackbar, IconButton } from '@material-ui/core';
 import { Parallax, Icon } from 'react-parallax';
 import EditIcon from '@material-ui/icons/Edit';
 import CancelIcon from '@material-ui/icons/Cancel';
@@ -20,6 +20,11 @@ import Calendar from './Calendar';
 import InvitationList from './InvitationList';
 import GroupList from './GroupList';
 import ClassList from './ClassList';
+import Amplify, { Storage, Auth, Hub } from 'aws-amplify';
+import BackendExports from './BackendExports';
+import CloseIcon from '@material-ui/icons/Close';
+import { GcpExports } from './cloud/CloudExports';
+import GoogleLogin from 'react-google-login';
 
 const styles = theme => ({
   container: {
@@ -32,7 +37,10 @@ const styles = theme => ({
   textField: {
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
-    width: 300,
+    width: 300
+  },
+  bigFont: {
+    fontSize: 'x-large'
   },
   blueAvatar: {
     margin: 30,
@@ -87,45 +95,231 @@ const styles = theme => ({
      position: "absolute",
      top: 0,
      margin: "5px"
-   }
+   },
+   googleLogin: {
+    background: 'white',
+    width: '85%',
+    'margin-top': '10px',
+    'vertical-align': 'middle',
+    'border-width': '0px'
+  }
 });
 
 class Profile extends React.Component {
-  state = {
-    name: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    school: "No School"
-  };
+  constructor() {
+    super();
+    this.state = {
+      fields: null,
+      user: null,
+      schools: [],
+      updating: false,
+      errorMsg: null
+    };
+  }
+
+  //Called on component initialization
+  componentWillMount() {
+    var syllaToken = this.props["syllaToken"];
+    fetch(BackendExports.Url + '/api/getschools', 
+    {
+        method: 'GET',
+        headers: new Headers({
+            "authorization": syllaToken
+        }),
+        credentials: 'include'
+    })
+    .then((response) => {
+      return response.json();
+    })
+    .then((response) => {
+      console.log("Schools:", response);
+      this.setState({
+        "schools": response
+      });
+    }).catch((err) => {
+      console.error("GetUser Ex: ", err);
+    });
+    this.getUserData(this.props["syllaToken"]);
+  }
+
+  getUserData(syllaToken) {
+    this.setState({
+      "fields": null,
+      "user": null
+    })
+    fetch(BackendExports.Url + '/api/getuser', 
+    {
+        method: 'GET',
+        headers: new Headers({
+            "authorization": syllaToken
+        }),
+        credentials: 'include'
+    })
+    .then((response) => {
+      return response.json();
+    })
+    .then((response) => {
+      this.setState({
+        "fields": response,
+        "user": response
+      });
+    }).catch((err) => {
+      console.error("GetUser Ex: ", err);
+    });
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.getUserData(nextProps["syllaToken"]);
+  }
 
   handleChange = name => event => {
     this.setState({
-      [name]: event.target.value,
+      fields: {
+        [name]: event.target.value
+      }
     });
   };
 
+  onUpdate() {
+    this.setState({
+      updating: true
+    });
+    var changedBody = {};
+    for (var key in this.state.fields) {
+      if (this.state.user[key] != this.state.fields[key]) {
+        changedBody[key] = this.state.fields[key];
+      }
+    }
+    console.log("CHANGED BODY: ", changedBody);
+    fetch(BackendExports.Url + '/api/modifyuser', 
+    {
+        method: 'POST',
+        headers: new Headers({
+            "authorization": this.props["syllaToken"]
+        }),
+        credentials: 'include',
+        body: JSON.stringify(changedBody)
+    })
+    .then((response) => {
+      if (response.ok) {
+        var newUser = this.state.user;
+        for (var key in changedBody) {
+          newUser[key] = changedBody[key];
+        }
+        this.setState({
+          updating: false,
+          editing: false,
+          user: newUser
+        });
+      } else {
+        return response.json();
+      }
+    })
+    .then((response) => {
+      if (response != null) {
+        this.setState({
+          updating: false,
+          errorMsg: response["msg"]
+        });
+      }
+    })
+    .catch((err) => {
+      console.error("GetUser Ex: ", err);
+    });
+  }
+
+  onSnackClose() {
+    this.setState({ errorMsg: null });
+  }
+
+  onGoogleSignIn(gs) {
+    fetch(BackendExports.Url + '/api/exchangegoogle', 
+    {
+        method: 'POST',
+        headers: new Headers({
+            "authorization": this.props.syllaToken
+        }),
+        credentials: 'include',
+        body: JSON.stringify({
+            code: gs.code
+        })
+    })
+    .then((response) => {
+        if (response.ok) {
+            console.log("REFRESH TOKEN SUBMITTED");
+        }
+    })
+  }
+
   render() {
     const { classes } = this.props;
+    if (this.state.user == null) {
+      return (
+      <Grid container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justify="center">
+        <CircularProgress className={classes.progress} size={50} />
+      </Grid>);
+    }
 
     return (
       <div>
+        <Snackbar 
+          anchorOrigin={{vertical: 'bottom', horizontal: 'left'}} 
+          open={(this.state.errorMsg != null)} 
+          autoHideDuration={6000}
+          ContentProps={{
+              'aria-describedby': 'message-id',
+          }}
+          onClose={this.onSnackClose.bind(this)}
+          message={<span id='message-id'>{this.state.errorMsg}</span>}
+          action={[
+              <IconButton
+                  key="close"
+                  aria-label="Close"
+                  color="inherit"
+                  className={classes.close}
+                  onClick={this.onSnackClose.bind(this)}
+              >
+                  <CloseIcon />
+              </IconButton>,
+          ]}
+            />
         <Parallax
-          blur={5}
           bgImage={require('./imgs/background.jpg')}
-          bgImageAlt="the cat"
-          strength={800}>
+          bgImageAlt="School"
+          strength={300}>
           <div style={{ height: '300px' }}>
-            <Button color="primary" variant="contained" className={classes.topRightCorner}>
+            <Button color="primary" variant="contained" className={classes.topRightCorner} onClick={() => {
+              this.setState({
+                user: null,
+                fields: null
+              });
+              Auth.signOut()
+            }}>
               Log Out
             </Button>
             <Select
-              value={this.state.school}
+              value={(this.state.fields.school != null)? this.state.fields.school.name: "No School"}
               onChange={(event) => {
                 console.log(event.target.value);
-                this.setState({
-                  school: event.target.value
-                });
+                if (event.target.value != null) {
+                  this.setState({
+                    fields: {
+                      school: { 
+                        name: event.target.value 
+                      }
+                    }
+                  });
+                } else {
+                  this.setState({
+                    fields: {
+                      school: null
+                    }
+                  });
+                }
               }}
               inputProps={{
                 name: 'school',
@@ -133,24 +327,24 @@ class Profile extends React.Component {
               }}
               disabled={!this.state.editing}
               className={classes.topLeftCorner}>
-                <MenuItem value={"No School"}>
+                <MenuItem value={null}>
                   No School
                 </MenuItem>
-                <MenuItem value={"CPP"}>CPP</MenuItem>
-                <MenuItem value={"UCSD"}>UCSD</MenuItem>
-                <MenuItem value={"UCI"}>UCI</MenuItem>
+                {this.state.schools.map((school) => {
+                  return <MenuItem value={school.name}>{school.name}</MenuItem>
+                })}
             </Select>
           </div>
         </Parallax>
         <Grid container
-            spacing={0}
-            direction="column"
-            alignItems="center"
-            justify="center">
-            <Grid justify="center" item xs={6}>
-              <Avatar className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
-            </Grid>
+          spacing={0}
+          direction="column"
+          alignItems="center"
+          justify="center">
+          <Grid justify="center" item xs={6}>
+            <Avatar className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
           </Grid>
+        </Grid>
         <Grid container
           spacing={0}
           direction="column"
@@ -163,8 +357,13 @@ class Profile extends React.Component {
                 id="filled-username"
                 label="Username"
                 className={classes.textField}
-                value={this.state.username}
+                value={this.state.fields.username}
                 onChange={this.handleChange('username')}
+                InputProps={{
+                  classes: {
+                    input: classes.bigFont,
+                  },
+                }}
                 margin="normal"
               />
 
@@ -173,8 +372,13 @@ class Profile extends React.Component {
                 id="filled-firstname"
                 label="First Name"
                 className={classes.textField}
-                value={this.state.username}
-                onChange={this.handleChange('firstname')}
+                value={this.state.fields.firstName}
+                onChange={this.handleChange('firstName')}
+                InputProps={{
+                  classes: {
+                    input: classes.bigFont,
+                  },
+                }}
                 margin="normal"
               />
 
@@ -183,8 +387,13 @@ class Profile extends React.Component {
                 id="filled-lastname"
                 label="Last Name"
                 className={classes.textField}
-                value={this.state.username}
-                onChange={this.handleChange('lastname')}
+                value={this.state.fields.lastName}
+                onChange={this.handleChange('lastName')}
+                InputProps={{
+                  classes: {
+                    input: classes.bigFont,
+                  },
+                }}
                 margin="normal"
               />
               
@@ -204,17 +413,20 @@ class Profile extends React.Component {
           <Grid item xs={18}>
             <Grow in={this.state.editing}>
               <div>
-                <Button variant="fab"
-                  aria-label="Done" className={classes.greenButton}
-                  onClick={() => {console.log("DONE")}}>
-                  <DoneIcon />
-                </Button>
-                
-                <Button variant="fab"
-                  aria-label="Cancel" className={classes.redButton}
-                  onClick={() => {this.setState({editing: false})}}>
-                  <CancelIcon />
-                </Button>
+                {!this.state.updating && <div>
+                  <Button variant="fab"
+                    aria-label="Done" className={classes.greenButton}
+                    onClick={this.onUpdate.bind(this)}>
+                    <DoneIcon />
+                  </Button>
+                  
+                  <Button variant="fab"
+                    aria-label="Cancel" className={classes.redButton}
+                    onClick={() => {this.setState({fields: this.state.user, editing: false})}}>
+                    <CancelIcon />
+                  </Button>
+                </div>}
+                {this.state.updating && <CircularProgress className={classes.progress} size={50} />}
               </div>
             </Grow>
           </Grid>
@@ -228,7 +440,23 @@ class Profile extends React.Component {
                       <TableCell className={classes.calButton}>iPhone Calendar</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
+                      { (this.state.user.providers.indexOf("google") < 0)
+                        ? <GoogleLogin
+                            className={classes.googleLogin}
+                            clientId={GcpExports.clientID}
+                            responseType="code"
+                            accessType="offline"
+                            scope="profile email"
+                            uxMode="redirect"
+                            redirect_uri="postmessage"
+                            onSuccess={this.onGoogleSignIn.bind(this)}
+                            onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
+                            <Button variant="contained" color="primary">
+                                Link
+                            </Button>
+                          </GoogleLogin>
+                        : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
+                      }
                       <TableCell className={classes.calButton}><Button  variant="contained" color="primary">Link</Button></TableCell>
                       <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
                     </TableRow>

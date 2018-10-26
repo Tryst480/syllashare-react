@@ -49,7 +49,6 @@ class Code extends Component {
         if (this.props.config.mode == "SIGNUP") {
             Auth.confirmSignUp(this.props.config.username, this.state.code)
                 .then(() => {
-                    console.log("PWD: ", pwd);
                     Auth.signIn(this.props.config.username, pwd)
                         .then((user) => {
                             console.log("Code SignUp: ", user);
