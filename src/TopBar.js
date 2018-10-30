@@ -240,7 +240,6 @@ class TopBar extends React.Component {
     popper: '',
     suggestions: [],  
     checkedA: true,
-    checkedB: true,
   };
 
 
@@ -393,7 +392,7 @@ class TopBar extends React.Component {
                 control={
                   <Switch
                     checked={this.state.checkedA}
-                    onChange={this.handleChange('checkedA')}
+                    onChange={this.handleSwitch('checkedA')}
                     value="checkedA"
                   />
                 }
