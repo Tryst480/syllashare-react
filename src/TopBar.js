@@ -16,6 +16,13 @@ import AccountCircle from '@material-ui/icons/AccountCircle';
 import MailIcon from '@material-ui/icons/Mail';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
+import deburr from 'lodash/deburr';
+import TextField from '@material-ui/core/TextField';
+import match from 'autosuggest-highlight/match';
+import parse from 'autosuggest-highlight/parse';
+import Paper from '@material-ui/core/Paper';
+import Popper from '@material-ui/core/Popper';
+
 
 const styles = theme => ({
   root: {
@@ -86,30 +93,167 @@ const styles = theme => ({
       display: 'none',
     },
   },
+  rootAuto: {
+    height: 250,
+    flexGrow: 1,
+  },
+  container: {
+    position: 'relative',
+  },
+  suggestionsContainerOpen: {
+    position: 'absolute',
+    zIndex: 1,
+    marginTop: theme.spacing.unit,
+    left: 0,
+    right: 0,
+  },
+  suggestion: {
+    display: 'block',
+  },
+  suggestionsList: {
+    margin: 0,
+    padding: 0,
+    listStyleType: 'none',
+  },
+  divider: {
+    height: theme.spacing.unit * 2,
+  },
 });
+
+const suggestions = [
+  { label: 'Accounting'},
+  { label: 'Aerospace Engineering'}, 
+  { label: 'Agriculture'}, 
+  { label: 'Anthropology'},
+  { label: 'Architecture'},
+  { label: 'Art'},
+  { label: 'Biology'},
+  { label: 'Bussiness'},
+  { label: 'Civil Engineering'},
+  { label: 'Chemimstry'}, 
+  { label: 'Chemical Engineering'}, 
+  { label: 'Computer Science'},     
+  { label: 'Commmunication'},   
+  { label: 'Dance'},   
+  { label: 'Econommics'},   
+  { label: 'Engineering'},   
+  { label: 'English'},   
+]
+
+function renderInputComponent(inputProps) {
+  const { classes, inputRef = () => {}, ref, ...other } = inputProps;
+
+  return (
+    <TextField
+      fullWidth
+      InputProps={{
+        inputRef: node => {
+          ref(node);
+          inputRef(node);
+        },
+        classes: {
+          input: classes.input,
+        },
+      }}
+      {...other}
+    />
+  );
+}
+
+function renderInputComponent(inputProps) {
+  const { classes, inputRef = () => {}, ref, ...other } = inputProps;
+
+  return (
+    <TextField
+      fullWidth
+      InputProps={{
+        inputRef: node => {
+          ref(node);
+          inputRef(node);
+        },
+        classes: {
+          input: classes.input,
+        },
+      }}
+      {...other}
+    />
+  );
+}
+
+function renderSuggestion(suggestion, { query, isHighlighted }) {
+  const matches = match(suggestion.label, query);
+  const parts = parse(suggestion.label, matches);
+
+  return (
+    <MenuItem selected={isHighlighted} component="div">
+      <div>
+        {parts.map((part, index) => {
+          return part.highlight ? (
+            <span key={String(index)} style={{ fontWeight: 500 }}>
+              {part.text}
+            </span>
+          ) : (
+            <strong key={String(index)} style={{ fontWeight: 300 }}>
+              {part.text}
+            </strong>
+          );
+        })}
+      </div>
+    </MenuItem>
+  );
+}
+
+function getSuggestions(value) {
+  const inputValue = deburr(value.trim()).toLowerCase();
+  const inputLength = inputValue.length;
+  let count = 0;
+
+  return inputLength === 0
+    ? []
+    : suggestions.filter(suggestion => {
+        const keep =
+          count < 5 && suggestion.label.slice(0, inputLength).toLowerCase() === inputValue;
+
+        if (keep) {
+          count += 1;
+        }
+
+        return keep;
+      });
+}
+
+function getSuggestionValue(suggestion) {
+  return suggestion.label;
+}
+
+
 
 class TopBar extends React.Component {
   state = {
     anchorEl: null,
     mobileMoreAnchorEl: null,
     searchValue: '',
-    searchSuggestions: []
+    single: '',
+    popper: '',
+    suggestions: [],  
   };
 
-  // Autosuggest will call this function every time you need to update suggestions.
-  // You already implemented this logic above, so just use it.
-  onSuggestionsFetchRequested = ({ value }) => {
-    /*
+
+  handleSuggestionsFetchRequested = ({ value }) => {
     this.setState({
-        suggestions: getSuggestions(value)
+      suggestions: getSuggestions(value),
     });
-    */
   };
 
-  // Autosuggest will call this function every time you need to clear suggestions.
-  onSuggestionsClearRequested = () => {
+  handleSuggestionsClearRequested = () => {
     this.setState({
-      searchSuggestions: []
+      suggestions: [],
+    });
+  };
+
+  handleChange = name => (event, { newValue }) => {
+    this.setState({
+      [name]: newValue,
     });
   };
 
@@ -182,11 +326,13 @@ class TopBar extends React.Component {
       </Menu>
     );
 
-    // Autosuggest will pass through all these props to the input.
-    const inputProps = {
-      placeholder: 'Type a class',
-      value: this.state.searchValue,
-      onChange: this.onChange
+    const autosuggestProps = {
+      renderInputComponent,
+      suggestions: this.state.suggestions,
+      onSuggestionsFetchRequested: this.handleSuggestionsFetchRequested,
+      onSuggestionsClearRequested: this.handleSuggestionsClearRequested,
+      getSuggestionValue,
+      renderSuggestion,
     };
 
     return (
@@ -204,17 +350,34 @@ class TopBar extends React.Component {
                 <SearchIcon />
               </div>
               <Autosuggest
-                suggestions={this.state.searchSuggestions}
-                onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
-                onSuggestionsClearRequested={this.onSuggestionsClearRequested}
-                getSuggestionValue={(suggestion) => {return suggestion.name}}
-                renderSuggestion={(suggestion) => {
-                    <div>
-                        {suggestion.name}
-                    </div>
+                {...autosuggestProps}
+                inputProps={{
+                  classes,
+                  value: this.state.popper,
+                  onChange: this.handleChange('popper'),
+                  inputRef: node => {
+                    this.popperNode = node;
+                  },
+                  InputLabelProps: {
+                    shrink: true,
+                  },
                 }}
-                inputProps={inputProps}
-                />
+                theme={{
+                  suggestionsList: classes.suggestionsList,
+                  suggestion: classes.suggestion,
+                }}
+                renderSuggestionsContainer={options => (
+                  <Popper anchorEl={this.popperNode} open={Boolean(options.children)}>
+                    <Paper
+                      square
+                      {...options.containerProps}
+                      style={{ width: this.popperNode ? this.popperNode.clientWidth : null }}
+                    >
+                      {options.children}
+                    </Paper>
+                  </Popper>
+                )}
+              />
             </div>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
