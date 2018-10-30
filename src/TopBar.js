@@ -22,6 +22,9 @@ import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
 import Paper from '@material-ui/core/Paper';
 import Popper from '@material-ui/core/Popper';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
 
 const styles = theme => ({
@@ -236,6 +239,8 @@ class TopBar extends React.Component {
     single: '',
     popper: '',
     suggestions: [],  
+    checkedA: true,
+    checkedB: true,
   };
 
 
@@ -272,6 +277,10 @@ class TopBar extends React.Component {
 
   handleMobileMenuClose = () => {
     this.setState({ mobileMoreAnchorEl: null });
+  };
+
+  handleSwitch = name => event => {
+    this.setState({ [name]: event.target.checked });
   };
 
   render() {
@@ -379,6 +388,18 @@ class TopBar extends React.Component {
                 )}
               />
             </div>
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={this.state.checkedA}
+                    onChange={this.handleChange('checkedA')}
+                    value="checkedA"
+                  />
+                }
+                label="User"
+              />
+            </FormGroup>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton color="inherit">
