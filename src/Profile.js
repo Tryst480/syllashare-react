@@ -17,7 +17,7 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import DoneIcon from '@material-ui/icons/Done';
 import Grow from '@material-ui/core/Grow';
 import Calendar from './Calendar';
-import InvitationList from './InvitationList';
+
 import GroupList from './GroupList';
 import ClassList from './ClassList';
 import Amplify, { Storage, Auth, Hub } from 'aws-amplify';
