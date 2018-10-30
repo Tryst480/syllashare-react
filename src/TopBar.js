@@ -22,9 +22,8 @@ import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
 import Paper from '@material-ui/core/Paper';
 import Popper from '@material-ui/core/Popper';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import Button from '@material-ui/core/Button';
 
 
 const styles = theme => ({
@@ -120,6 +119,9 @@ const styles = theme => ({
   },
   divider: {
     height: theme.spacing.unit * 2,
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
   },
 });
 
@@ -387,18 +389,14 @@ class TopBar extends React.Component {
                 )}
               />
             </div>
-            <FormGroup row>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={this.state.checkedA}
-                    onChange={this.handleSwitch('checkedA')}
-                    value="checkedA"
-                  />
-                }
-                label="User"
-              />
-            </FormGroup>
+            <Switch
+              checked={this.state.checkedA}
+              onChange={this.handleSwitch('checkedA')}
+              value="checkedA"
+            />
+            <Button variant="contained" color="secondary" className={classes.button}>
+              User
+            </Button>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton color="inherit">
