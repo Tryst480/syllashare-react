@@ -152,6 +152,13 @@ class Authenticator extends Component {
             Auth.currentSession()
             .then(session => {
                 this.getSyllaToken().then((syllaToken) => {
+                    var provider = "cognito";
+                    this.props.onAuthenticated(syllaToken, provider);
+                    this.setState({
+                        loading: false,
+                        provider: provider,
+                        syllaToken: syllaToken
+                    });
                     resolve(syllaToken);
                 });
             }).catch((err) => {
