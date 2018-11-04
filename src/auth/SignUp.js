@@ -117,8 +117,8 @@ class SignUp extends Component {
                 <Grid container direction="column" alignItems="center" spacing={2}>
                     <Grid item xs={8} sm={8}>
                         <TextField
-                            id="name"
-                            label="Name"
+                            id="username"
+                            label="Username"
                             className={`${classes.textField} ${classes.nameField}`}
                             value={this.state.name}
                             disabled={this.state.loading} 

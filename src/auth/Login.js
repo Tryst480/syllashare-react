@@ -108,8 +108,8 @@ class Login extends Component {
                 <Grid container direction="column" alignItems="center" spacing={2}>
                     <Grid item xs={8} sm={8}>
                         <TextField
-                            id="name"
-                            label="Name or Email"
+                            id="username"
+                            label="Username or Email"
                             className={`${classes.textField} ${classes.nameField}`}
                             value={this.state.name}
                             disabled={this.state.loading} 
