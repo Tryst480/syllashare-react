@@ -20,11 +20,13 @@ import Calendar from './Calendar';
 
 import GroupList from './GroupList';
 import ClassList from './ClassList';
+import ClassEdit from "./ClassEdit";
 import Amplify, { Storage, Auth, Hub } from 'aws-amplify';
 import BackendExports from './BackendExports';
 import CloseIcon from '@material-ui/icons/Close';
 import { GcpExports } from './cloud/CloudExports';
 import GoogleLogin from 'react-google-login';
+
 
 const styles = theme => ({
   container: {
@@ -113,7 +115,8 @@ class Profile extends React.Component {
       user: null,
       schools: [],
       updating: false,
-      errorMsg: null
+      errorMsg: null,
+        mainPage: true
     };
   }
 
@@ -251,24 +254,11 @@ class Profile extends React.Component {
     })
   }
 
-  render() {
-    const { classes } = this.props;
-    if (this.state.user == null) {
-      return (
-      <Grid container
-        spacing={0}
-        direction="column"
-        alignItems="center"
-        justify="center">
-        <CircularProgress className={classes.progress} size={50} />
-      </Grid>);
-    }
-
-    return (
-      <div>
-        <Snackbar 
-          anchorOrigin={{vertical: 'bottom', horizontal: 'left'}} 
-          open={(this.state.errorMsg != null)} 
+  topBar() {
+      const { classes } = this.props;
+      return (<Snackbar
+          anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+          open={(this.state.errorMsg != null)}
           autoHideDuration={6000}
           ContentProps={{
               'aria-describedby': 'message-id',
@@ -283,205 +273,458 @@ class Profile extends React.Component {
                   className={classes.close}
                   onClick={this.onSnackClose.bind(this)}
               >
-                  <CloseIcon />
+                  <CloseIcon/>
               </IconButton>,
           ]}
-            />
-        <Parallax
-          bgImage={require('./imgs/background.jpg')}
-          bgImageAlt="School"
-          strength={300}>
-          <div style={{ height: '300px' }}>
-            <Button color="primary" variant="contained" className={classes.topRightCorner} onClick={() => {
-              this.setState({
-                user: null,
-                fields: null
-              });
-              Auth.signOut()
-            }}>
-              Log Out
-            </Button>
-            <Select
-              value={(this.state.fields.school != null)? this.state.fields.school.name: "No School"}
-              onChange={(event) => {
-                console.log(event.target.value);
-                if (event.target.value != null) {
-                  this.setState({
-                    fields: {
-                      school: { 
-                        name: event.target.value 
-                      }
-                    }
-                  });
-                } else {
-                  this.setState({
-                    fields: {
-                      school: null
-                    }
-                  });
-                }
-              }}
-              inputProps={{
-                name: 'school',
-                id: 'school-simple',
-              }}
-              disabled={!this.state.editing}
-              className={classes.topLeftCorner}>
-                <MenuItem value={null}>
-                  No School
-                </MenuItem>
-                {this.state.schools.map((school) => {
-                  return <MenuItem value={school.name}>{school.name}</MenuItem>
-                })}
-            </Select>
-          </div>
-        </Parallax>
-        <Grid container
-          spacing={0}
-          direction="column"
-          alignItems="center"
-          justify="center">
-          <Grid justify="center" item xs={6}>
-            <Avatar className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
-          </Grid>
-        </Grid>
-        <Grid container
-          spacing={0}
-          direction="column"
-          alignItems="center"
-          justify="center">
-          <Grid item xs={16}>
-            <form noValidate autoComplete="off">
-              <TextField InputLabelProps={{ shrink: true }}
-                disabled={!this.state.editing}
-                id="filled-username"
-                label="Username"
-                className={classes.textField}
-                value={this.state.fields.username}
-                onChange={this.handleChange('username')}
-                InputProps={{
-                  classes: {
-                    input: classes.bigFont,
-                  },
-                }}
-                margin="normal"
-              />
+      />);
+  }
 
-              <TextField InputLabelProps={{ shrink: true }}
-                disabled={!this.state.editing}
-                id="filled-firstname"
-                label="First Name"
-                className={classes.textField}
-                value={this.state.fields.firstName}
-                onChange={this.handleChange('firstName')}
-                InputProps={{
-                  classes: {
-                    input: classes.bigFont,
-                  },
-                }}
-                margin="normal"
-              />
 
-              <TextField InputLabelProps={{ shrink: true }}
-                disabled={!this.state.editing}
-                id="filled-lastname"
-                label="Last Name"
-                className={classes.textField}
-                value={this.state.fields.lastName}
-                onChange={this.handleChange('lastName')}
-                InputProps={{
-                  classes: {
-                    input: classes.bigFont,
-                  },
-                }}
-                margin="normal"
-              />
-              
-            </form>
-          </Grid>
-          <Grid item xs={18}>
-            <Grow in={!this.state.editing}>
-              <div className={(this.state.editing)? classes.gone: classes.visible}>
-                <Button variant="fab" color="primary" 
-                  aria-label="Edit" className={classes.button}
-                  onClick={() => {this.setState({editing: true})}}>
-                  <EditIcon />
-                </Button>
-              </div>
-            </Grow>
-          </Grid>
-          <Grid item xs={18}>
-            <Grow in={this.state.editing}>
-              <div>
-                {!this.state.updating && <div>
-                  <Button variant="fab"
-                    aria-label="Done" className={classes.greenButton}
-                    onClick={this.onUpdate.bind(this)}>
-                    <DoneIcon />
+  renderMainPage() {
+      const { classes } = this.props;
+    return(<div>
+        {this.topBar()}
+          <Parallax
+              bgImage={require('./imgs/background.jpg')}
+              bgImageAlt="School"
+              strength={300}>
+              <div style={{ height: '300px' }}>
+                  <Button color="primary" variant="contained" className={classes.topRightCorner} onClick={() => {
+                      this.setState({
+                          user: null,
+                          fields: null
+                      });
+                      Auth.signOut()
+                  }}>
+                      Log Out
                   </Button>
-                  
-                  <Button variant="fab"
-                    aria-label="Cancel" className={classes.redButton}
-                    onClick={() => {this.setState({fields: this.state.user, editing: false})}}>
-                    <CancelIcon />
-                  </Button>
-                </div>}
-                {this.state.updating && <CircularProgress className={classes.progress} size={50} />}
+                  <Select
+                      value={(this.state.fields.school != null)? this.state.fields.school.name: "No School"}
+                      onChange={(event) => {
+                          console.log(event.target.value);
+                          if (event.target.value != null) {
+                              this.setState({
+                                  fields: {
+                                      school: {
+                                          name: event.target.value
+                                      }
+                                  }
+                              });
+                          } else {
+                              this.setState({
+                                  fields: {
+                                      school: null
+                                  }
+                              });
+                          }
+                      }}
+                      inputProps={{
+                          name: 'school',
+                          id: 'school-simple',
+                      }}
+                      disabled={!this.state.editing}
+                      className={classes.topLeftCorner}>
+                      <MenuItem value={null}>
+                          No School
+                      </MenuItem>
+                      {this.state.schools.map((school) => {
+                          return <MenuItem value={school.name}>{school.name}</MenuItem>
+                      })}
+                  </Select>
               </div>
-            </Grow>
-          </Grid>
-          <Grid item xs={18}>
-            <Paper className={classes.root}>
-              <Table className={classes.table}>
-                <TableHead>
-                    <TableRow>
-                      <TableCell className={classes.calButton}>Google Calendar</TableCell>
-                      <TableCell className={classes.calButton}>Microsoft Calendar</TableCell>
-                      <TableCell className={classes.calButton}>iPhone Calendar</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      { (this.state.user.providers.indexOf("google") < 0)
-                        ? <GoogleLogin
-                            className={classes.googleLogin}
-                            clientId={GcpExports.clientID}
-                            responseType="code"
-                            accessType="offline"
-                            scope="profile email"
-                            uxMode="redirect"
-                            redirect_uri="postmessage"
-                            onSuccess={this.onGoogleSignIn.bind(this)}
-                            onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
-                            <Button variant="contained" color="primary">
-                                Link
-                            </Button>
-                          </GoogleLogin>
-                        : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
-                      }
-                      <TableCell className={classes.calButton}><Button  variant="contained" color="primary">Link</Button></TableCell>
-                      <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
-                    </TableRow>
-                </TableHead>
-              </Table>
-            </Paper>
-          </Grid>
-          <Grid item xs={24}>
-            <Grid container spacing={24}>
-              <Grid item xm={8}>
-                <h1>Classes</h1>
-                <ClassList />
+          </Parallax>
+          <Grid container
+                spacing={0}
+                direction="column"
+                alignItems="center"
+                justify="center">
+              <Grid justify="center" item xs={6}>
+                  <Avatar className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
               </Grid>
-              <Grid item xm={8}>
-                <h1>Groups</h1>
-                <GroupList />
-              </Grid>
-            </Grid>
           </Grid>
-        </Grid>
-        <Paper className={classes.root}>
-          <Calendar />
-        </Paper>
-      </div>
-    );
+          <Grid container
+                spacing={0}
+                direction="column"
+                alignItems="center"
+                justify="center">
+              <Grid item xs={16}>
+                  <form noValidate autoComplete="off">
+                      <TextField InputLabelProps={{ shrink: true }}
+                                 disabled={!this.state.editing}
+                                 id="filled-username"
+                                 label="Username"
+                                 className={classes.textField}
+                                 value={this.state.fields.username}
+                                 onChange={this.handleChange('username')}
+                                 InputProps={{
+                                     classes: {
+                                         input: classes.bigFont,
+                                     },
+                                 }}
+                                 margin="normal"
+                      />
+
+                      <TextField InputLabelProps={{ shrink: true }}
+                                 disabled={!this.state.editing}
+                                 id="filled-firstname"
+                                 label="First Name"
+                                 className={classes.textField}
+                                 value={this.state.fields.firstName}
+                                 onChange={this.handleChange('firstName')}
+                                 InputProps={{
+                                     classes: {
+                                         input: classes.bigFont,
+                                     },
+                                 }}
+                                 margin="normal"
+                      />
+
+                      <TextField InputLabelProps={{ shrink: true }}
+                                 disabled={!this.state.editing}
+                                 id="filled-lastname"
+                                 label="Last Name"
+                                 className={classes.textField}
+                                 value={this.state.fields.lastName}
+                                 onChange={this.handleChange('lastName')}
+                                 InputProps={{
+                                     classes: {
+                                         input: classes.bigFont,
+                                     },
+                                 }}
+                                 margin="normal"
+                      />
+
+                  </form>
+              </Grid>
+              <Grid item xs={18}>
+                  <Grow in={!this.state.editing}>
+                      <div className={(this.state.editing)? classes.gone: classes.visible}>
+                          <Button variant="fab" color="primary"
+                                  aria-label="Edit" className={classes.button}
+                                  onClick={() => {this.setState({editing: true})}}>
+                              <EditIcon />
+                          </Button>
+                      </div>
+                  </Grow>
+              </Grid>
+              <Grid item xs={18}>
+                  <Grow in={this.state.editing}>
+                      <div>
+                          {!this.state.updating && <div>
+                              <Button variant="fab"
+                                      aria-label="Done" className={classes.greenButton}
+                                      onClick={this.onUpdate.bind(this)}>
+                                  <DoneIcon />
+                              </Button>
+
+                              <Button variant="fab"
+                                      aria-label="Cancel" className={classes.redButton}
+                                      onClick={() => {this.setState({fields: this.state.user, editing: false})}}>
+                                  <CancelIcon />
+                              </Button>
+                          </div>}
+                          {this.state.updating && <CircularProgress className={classes.progress} size={50} />}
+                      </div>
+                  </Grow>
+              </Grid>
+              <Grid item xs={18}>
+                  <Paper className={classes.root}>
+                      <Table className={classes.table}>
+                          <TableHead>
+                              <TableRow>
+                                  <TableCell className={classes.calButton}>Google Calendar</TableCell>
+                                  <TableCell className={classes.calButton}>Microsoft Calendar</TableCell>
+                                  <TableCell className={classes.calButton}>iPhone Calendar</TableCell>
+                              </TableRow>
+                              <TableRow>
+                                  { (this.state.user.providers.indexOf("google") < 0)
+                                      ? <GoogleLogin
+                                          className={classes.googleLogin}
+                                          clientId={GcpExports.clientID}
+                                          responseType="code"
+                                          accessType="offline"
+                                          scope="profile email"
+                                          uxMode="redirect"
+                                          redirect_uri="postmessage"
+                                          onSuccess={this.onGoogleSignIn.bind(this)}
+                                          onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
+                                          <Button variant="contained" color="primary">
+                                              Link
+                                          </Button>
+                                      </GoogleLogin>
+                                      : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
+                                  }
+                                  <TableCell className={classes.calButton}><Button  variant="contained" color="primary">Link</Button></TableCell>
+                                  <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
+                              </TableRow>
+                          </TableHead>
+                      </Table>
+                  </Paper>
+              </Grid>
+              <Grid item xs={24}>
+                  <Grid container spacing={24}>
+                      <Grid item xm={8}>
+                          <h1>Classes</h1>
+                          <ClassList profile={this} />
+                      </Grid>
+                      <Grid item xm={8}>
+                          <h1>Groups</h1>
+                          <GroupList />
+                      </Grid>
+                  </Grid>
+              </Grid>
+          </Grid>
+          <Paper className={classes.root}>
+              <Calendar />
+          </Paper>
+      </div>);
+  }
+
+    renderClassEditPage(){
+        const { classes } = this.props;
+        return(<div>
+            {this.topBar()}
+            <ClassEdit/>
+        </div>);
+    }
+
+  render(){
+    const { classes } = this.props;
+    if (this.state.user == null) {
+      return (
+      <Grid container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justify="center">
+        <CircularProgress className={classes.progress} size={50} />
+      </Grid>);
+    }
+    else if (this.state.mainPage){
+        return this.renderMainPage();
+    }
+    else if (this.state.classEdit)
+    {
+        return this.renderClassEditPage();
+    }
+    // return (
+    //   <div>
+    //     <Snackbar
+    //       anchorOrigin={{vertical: 'bottom', horizontal: 'left'}}
+    //       open={(this.state.errorMsg != null)}
+    //       autoHideDuration={6000}
+    //       ContentProps={{
+    //           'aria-describedby': 'message-id',
+    //       }}
+    //       onClose={this.onSnackClose.bind(this)}
+    //       message={<span id='message-id'>{this.state.errorMsg}</span>}
+    //       action={[
+    //           <IconButton
+    //               key="close"
+    //               aria-label="Close"
+    //               color="inherit"
+    //               className={classes.close}
+    //               onClick={this.onSnackClose.bind(this)}
+    //           >
+    //               <CloseIcon />
+    //           </IconButton>,
+    //       ]}
+    //         />
+    //     <Parallax
+    //       bgImage={require('./imgs/background.jpg')}
+    //       bgImageAlt="School"
+    //       strength={300}>
+    //       <div style={{ height: '300px' }}>
+    //         <Button color="primary" variant="contained" className={classes.topRightCorner} onClick={() => {
+    //           this.setState({
+    //             user: null,
+    //             fields: null
+    //           });
+    //           Auth.signOut()
+    //         }}>
+    //           Log Out
+    //         </Button>
+    //         <Select
+    //           value={(this.state.fields.school != null)? this.state.fields.school.name: "No School"}
+    //           onChange={(event) => {
+    //             console.log(event.target.value);
+    //             if (event.target.value != null) {
+    //               this.setState({
+    //                 fields: {
+    //                   school: {
+    //                     name: event.target.value
+    //                   }
+    //                 }
+    //               });
+    //             } else {
+    //               this.setState({
+    //                 fields: {
+    //                   school: null
+    //                 }
+    //               });
+    //             }
+    //           }}
+    //           inputProps={{
+    //             name: 'school',
+    //             id: 'school-simple',
+    //           }}
+    //           disabled={!this.state.editing}
+    //           className={classes.topLeftCorner}>
+    //             <MenuItem value={null}>
+    //               No School
+    //             </MenuItem>
+    //             {this.state.schools.map((school) => {
+    //               return <MenuItem value={school.name}>{school.name}</MenuItem>
+    //             })}
+    //         </Select>
+    //       </div>
+    //     </Parallax>
+    //     <Grid container
+    //       spacing={0}
+    //       direction="column"
+    //       alignItems="center"
+    //       justify="center">
+    //       <Grid justify="center" item xs={6}>
+    //         <Avatar className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
+    //       </Grid>
+    //     </Grid>
+    //     <Grid container
+    //       spacing={0}
+    //       direction="column"
+    //       alignItems="center"
+    //       justify="center">
+    //       <Grid item xs={16}>
+    //         <form noValidate autoComplete="off">
+    //           <TextField InputLabelProps={{ shrink: true }}
+    //             disabled={!this.state.editing}
+    //             id="filled-username"
+    //             label="Username"
+    //             className={classes.textField}
+    //             value={this.state.fields.username}
+    //             onChange={this.handleChange('username')}
+    //             InputProps={{
+    //               classes: {
+    //                 input: classes.bigFont,
+    //               },
+    //             }}
+    //             margin="normal"
+    //           />
+    //
+    //           <TextField InputLabelProps={{ shrink: true }}
+    //             disabled={!this.state.editing}
+    //             id="filled-firstname"
+    //             label="First Name"
+    //             className={classes.textField}
+    //             value={this.state.fields.firstName}
+    //             onChange={this.handleChange('firstName')}
+    //             InputProps={{
+    //               classes: {
+    //                 input: classes.bigFont,
+    //               },
+    //             }}
+    //             margin="normal"
+    //           />
+    //
+    //           <TextField InputLabelProps={{ shrink: true }}
+    //             disabled={!this.state.editing}
+    //             id="filled-lastname"
+    //             label="Last Name"
+    //             className={classes.textField}
+    //             value={this.state.fields.lastName}
+    //             onChange={this.handleChange('lastName')}
+    //             InputProps={{
+    //               classes: {
+    //                 input: classes.bigFont,
+    //               },
+    //             }}
+    //             margin="normal"
+    //           />
+    //
+    //         </form>
+    //       </Grid>
+    //       <Grid item xs={18}>
+    //         <Grow in={!this.state.editing}>
+    //           <div className={(this.state.editing)? classes.gone: classes.visible}>
+    //             <Button variant="fab" color="primary"
+    //               aria-label="Edit" className={classes.button}
+    //               onClick={() => {this.setState({editing: true})}}>
+    //               <EditIcon />
+    //             </Button>
+    //           </div>
+    //         </Grow>
+    //       </Grid>
+    //       <Grid item xs={18}>
+    //         <Grow in={this.state.editing}>
+    //           <div>
+    //             {!this.state.updating && <div>
+    //               <Button variant="fab"
+    //                 aria-label="Done" className={classes.greenButton}
+    //                 onClick={this.onUpdate.bind(this)}>
+    //                 <DoneIcon />
+    //               </Button>
+    //
+    //               <Button variant="fab"
+    //                 aria-label="Cancel" className={classes.redButton}
+    //                 onClick={() => {this.setState({fields: this.state.user, editing: false})}}>
+    //                 <CancelIcon />
+    //               </Button>
+    //             </div>}
+    //             {this.state.updating && <CircularProgress className={classes.progress} size={50} />}
+    //           </div>
+    //         </Grow>
+    //       </Grid>
+    //       <Grid item xs={18}>
+    //         <Paper className={classes.root}>
+    //           <Table className={classes.table}>
+    //             <TableHead>
+    //                 <TableRow>
+    //                   <TableCell className={classes.calButton}>Google Calendar</TableCell>
+    //                   <TableCell className={classes.calButton}>Microsoft Calendar</TableCell>
+    //                   <TableCell className={classes.calButton}>iPhone Calendar</TableCell>
+    //                 </TableRow>
+    //                 <TableRow>
+    //                   { (this.state.user.providers.indexOf("google") < 0)
+    //                     ? <GoogleLogin
+    //                         className={classes.googleLogin}
+    //                         clientId={GcpExports.clientID}
+    //                         responseType="code"
+    //                         accessType="offline"
+    //                         scope="profile email"
+    //                         uxMode="redirect"
+    //                         redirect_uri="postmessage"
+    //                         onSuccess={this.onGoogleSignIn.bind(this)}
+    //                         onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
+    //                         <Button variant="contained" color="primary">
+    //                             Link
+    //                         </Button>
+    //                       </GoogleLogin>
+    //                     : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
+    //                   }
+    //                   <TableCell className={classes.calButton}><Button  variant="contained" color="primary">Link</Button></TableCell>
+    //                   <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
+    //                 </TableRow>
+    //             </TableHead>
+    //           </Table>
+    //         </Paper>
+    //       </Grid>
+    //       <Grid item xs={24}>
+    //         <Grid container spacing={24}>
+    //           <Grid item xm={8}>
+    //             <h1>Classes</h1>
+    //             <ClassList />
+    //           </Grid>
+    //           <Grid item xm={8}>
+    //             <h1>Groups</h1>
+    //             <GroupList />
+    //           </Grid>
+    //         </Grid>
+    //       </Grid>
+    //     </Grid>
+    //     <Paper className={classes.root}>
+    //       <Calendar />
+    //     </Paper>
+    //   </div>
+    // );
   }
 }
 

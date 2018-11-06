@@ -22,7 +22,7 @@ const styles = theme => ({
     }
 });
 
-class ClassList extends Component {
+class ClassEdit extends Component {
     constructor(props) {
         super();
         this.state = {
@@ -35,7 +35,7 @@ class ClassList extends Component {
     componentWillMount() {
         var params = {};
         var body = {};
-        
+
     }
 
     render() {
@@ -51,30 +51,30 @@ class ClassList extends Component {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                    {this.state.rows.map(row => {
-                        return (
-                        <TableRow key={row.id} onClick={() => this.props.profile.setState({
-                                        mainPage: false,
-                                        classEdit: true
+                        {this.state.rows.map(row => {
+                            return (
+                                <TableRow key={row.id} onClick={() => this.props.profile.setState({
+                                    mainPage: false,
+                                    classEdit: true
 
-                                      })}>
-                            <TableCell component="th" scope="row">
-                            {row.name}
-                            </TableCell>
-                            <TableCell>{row.teacher}</TableCell>
-                            <TableCell>{row.times}</TableCell>
-                        </TableRow>
-                        );
-                    })}
+                                })}>
+                                    <TableCell component="th" scope="row">
+                                        {row.name}
+                                    </TableCell>
+                                    <TableCell>{row.teacher}</TableCell>
+                                    <TableCell>{row.times}</TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
-                </Paper>
+            </Paper>
         </div>);
     }
 };
 
-ClassList.propTypes = {
+ClassEdit.propTypes = {
     classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(ClassList);
+export default withStyles(styles)(ClassEdit);
