@@ -54,8 +54,8 @@ class ClassEdit extends Component {
                         {this.state.rows.map(row => {
                             return (
                                 <TableRow key={row.id} onClick={() => this.props.profile.setState({
-                                    mainPage: false,
-                                    classEdit: true
+                                    mainPage: true,
+                                    classEdit: false
 
                                 })}>
                                     <TableCell component="th" scope="row">
