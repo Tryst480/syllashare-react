@@ -144,7 +144,8 @@ class Profile extends React.Component {
       updating: false,
       errorMsg: null,
       editProfileImg: false,
-      profileImgFile: null
+      profileImgFile: null,
+      profileImgUploading: false
     };
   }
 
@@ -194,6 +195,9 @@ class Profile extends React.Component {
         "fields": response,
         "user": response
       });
+      Storage.get(response.picKey.substr(7), { level: 'public' })
+      .then(picResult => this.setState({ "picUrl": picResult }))
+      .catch(err => console.error("GET PIC ERR: " + err));
     }).catch((err) => {
       console.error("GetUser Ex: ", err);
     });
@@ -299,9 +303,18 @@ class Profile extends React.Component {
       body: { "img": imgUrl }, // replace this with attributes you need
       headers: {} // OPTIONAL
     }
+    this.setState({ "profileImgUploading": true });
     API.put('SyllaShare', '/profilepic', reqOpts).then(response => {
-      console.log("RESP FINISHED");
+      this.setState({ 
+        profileImgUploading: false,
+        editProfileImg: false,
+        profileImgFile: null });
+      
+      Storage.get(response["picKey"].substr(7), { level: 'public' })
+      .then(picResult => this.setState({ "picUrl": picResult }))
+      .catch(err => console.error("GET PIC ERR: " + err));
     }).catch(error => {
+      this.setState({ "profileImgUploading": false });
       console.log(error);
     });
   }
@@ -333,7 +346,7 @@ class Profile extends React.Component {
         aspectRatio={1 / 1}
         guides={false}/>
         
-        <Button style={{marginTop: 30}}color="primary" variant="contained" onClick={this.onCrop.bind(this)}>Upload</Button>
+        <Button style={{marginTop: 30}}color="primary" variant="contained" disabled={this.state.profileImgUploading} onClick={this.onCrop.bind(this)}>Upload</Button>
       </div>);
 
     return (
@@ -427,7 +440,7 @@ class Profile extends React.Component {
               if (this.state.editing) {
                 this.setState({ editProfileImg: true })
               }
-              }} className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
+              }} src={this.state.picUrl} className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
           </Grid>
         </Grid>
         <Grid container
