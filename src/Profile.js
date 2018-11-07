@@ -145,7 +145,9 @@ class Profile extends React.Component {
       errorMsg: null,
       editProfileImg: false,
       profileImgFile: null,
-      profileImgUploading: false
+      profileImgUploading: false,
+      picUrl: null,
+      schoolPicUrl: null
     };
   }
 
@@ -198,6 +200,13 @@ class Profile extends React.Component {
       Storage.get(response.picKey.substr(7), { level: 'public' })
       .then(picResult => this.setState({ "picUrl": picResult }))
       .catch(err => console.error("GET PIC ERR: " + err));
+      if (response.school != null) {
+        Storage.get(response.school.picKey.substr(7), { level: 'public' })
+        .then(picResult => {console.log("SCHOOL PIC URL: ", picResult); this.setState({ "schoolPicUrl": picResult }) })
+        .catch(err => console.error("GET SCHOOL PIC ERR: " + err));
+      } else {
+        this.setState({ "schoolPicUrl": null })
+      }
     }).catch((err) => {
       console.error("GetUser Ex: ", err);
     });
@@ -261,6 +270,14 @@ class Profile extends React.Component {
     .catch((err) => {
       console.error("GetUser Ex: ", err);
     });
+  }
+
+  onEditCancel() {
+    console.log("ON EDIT CANCEL");
+    this.setState({fields: this.state.user, editing: false });
+    Storage.get(this.state.user.school.picKey.substr(7), { level: 'public' })
+        .then(picResult => this.setState({ "schoolPicUrl": picResult }))
+        .catch(err => console.error("GET SCHOOL PIC ERR: " + err));
   }
 
   onSnackClose() {
@@ -382,7 +399,7 @@ class Profile extends React.Component {
           ]}
             />
         <Parallax
-          bgImage={require('./imgs/background.jpg')}
+          bgImage={(this.state.schoolPicUrl == null)? require('./imgs/background.jpg'): this.state.schoolPicUrl}
           bgImageAlt="School"
           strength={300}>
           <div style={{ height: '300px' }}>
@@ -396,24 +413,29 @@ class Profile extends React.Component {
               Log Out
             </Button>
             <Select
+              style={{background: "#FFFFFF"}}
               value={(this.state.fields.school != null)? this.state.fields.school.name: "No School"}
               onChange={(event) => {
-                console.log(event.target.value);
-                if (event.target.value != null) {
-                  this.setState({
-                    fields: {
-                      school: { 
-                        name: event.target.value 
+                var schoolName = event.target.value;
+                for (var school of this.state.schools) {
+                  if (school.name == schoolName) {
+                    this.setState({
+                      fields: {
+                        school: school
                       }
-                    }
-                  });
-                } else {
-                  this.setState({
-                    fields: {
-                      school: null
-                    }
-                  });
+                    });
+                    Storage.get(school.picKey.substr(7), { level: 'public' })
+                    .then(picResult => this.setState({ "schoolPicUrl": picResult }))
+                    .catch(err => console.error("GET SCHOOL PIC ERR: " + err));
+                    return;
+                  }
                 }
+                this.setState({
+                  fields: {
+                    school: null
+                  },
+                  schoolPicUrl: null
+                });
               }}
               inputProps={{
                 name: 'school',
@@ -520,7 +542,7 @@ class Profile extends React.Component {
                   
                   <Button variant="fab"
                     aria-label="Cancel" className={classes.redButton}
-                    onClick={() => {this.setState({fields: this.state.user, editing: false})}}>
+                    onClick={this.onEditCancel.bind(this)}>
                     <CancelIcon />
                   </Button>
                 </div>}
