@@ -3,14 +3,14 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import Avatar from '@material-ui/core/Avatar';
 import blue from '@material-ui/core/colors/blue';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, MuiThemeProvider } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import Table from '@material-ui/core/Table';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import { Button, Grid, Select, MenuItem, CircularProgress, Snackbar, IconButton } from '@material-ui/core';
+import { Button, Grid, Select, MenuItem, CircularProgress, Snackbar, IconButton, Modal, Typography, Collapse } from '@material-ui/core';
 import { Parallax, Icon } from 'react-parallax';
 import EditIcon from '@material-ui/icons/Edit';
 import CancelIcon from '@material-ui/icons/Cancel';
@@ -20,11 +20,16 @@ import Calendar from './Calendar';
 
 import GroupList from './GroupList';
 import ClassList from './ClassList';
-import Amplify, { Storage, Auth, Hub } from 'aws-amplify';
+import Amplify, { Storage, Auth, Hub, API } from 'aws-amplify';
 import BackendExports from './BackendExports';
 import CloseIcon from '@material-ui/icons/Close';
-import { GcpExports } from './cloud/CloudExports';
+import { AwsExports, GcpExports } from './cloud/CloudExports';
 import GoogleLogin from 'react-google-login';
+import Dropzone from 'react-dropzone';
+import Cropper from 'react-cropper';
+import 'cropperjs/dist/cropper.css';
+
+Amplify.configure(AwsExports);
 
 const styles = theme => ({
   container: {
@@ -102,8 +107,32 @@ const styles = theme => ({
     'margin-top': '10px',
     'vertical-align': 'middle',
     'border-width': '0px'
-  }
+  },
+  paper: {
+    position: 'absolute',
+    width: theme.spacing.unit * 50,
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing.unit * 4,
+  },
+  collapsePaper: {
+    padding: theme.spacing.unit * 2,
+    textAlign: 'center',
+    color: theme.palette.text.secondary,
+    height: 200
+},
 });
+
+function getModalStyle() {
+  const top = 50;
+  const left = 50;
+
+  return {
+    top: `${top}%`,
+    left: `${left}%`,
+    transform: `translate(-${top}%, -${left}%)`,
+  };
+}
 
 class Profile extends React.Component {
   constructor() {
@@ -113,7 +142,9 @@ class Profile extends React.Component {
       user: null,
       schools: [],
       updating: false,
-      errorMsg: null
+      errorMsg: null,
+      editProfileImg: false,
+      profileImgFile: null
     };
   }
 
@@ -251,6 +282,30 @@ class Profile extends React.Component {
     })
   }
 
+  handleEditProfileImgClose() {
+    this.setState({
+      editProfileImg: false,
+      profileImgFile: null
+    })
+  }
+
+  onDrop(acceptedFiles) {
+    this.setState({ "profileImgFile": URL.createObjectURL(acceptedFiles[0]) });
+  }
+
+  onCrop() {
+    var imgUrl = this.refs.cropper.getCroppedCanvas().toDataURL();
+    var reqOpts = {
+      body: { "img": imgUrl }, // replace this with attributes you need
+      headers: {} // OPTIONAL
+    }
+    API.put('SyllaShare', '/profilepic', reqOpts).then(response => {
+      console.log("RESP FINISHED");
+    }).catch(error => {
+      console.log(error);
+    });
+  }
+
   render() {
     const { classes } = this.props;
     if (this.state.user == null) {
@@ -264,8 +319,34 @@ class Profile extends React.Component {
       </Grid>);
     }
 
+    var uploadModalContents = (this.state.profileImgFile == null)? (<Dropzone
+      style={{"width" : "100%", "height" : "200px", "border" : "1px solid black", "textAlign": "center"}}
+      accept="image/*"
+      onDrop={this.onDrop.bind(this)}>
+      <p>Drag and Drop Profile Picture<br/> (or click to manually select)</p>
+    </Dropzone>): (
+      <div style={{"text-align": "center"}}>
+      <Cropper
+        ref='cropper'
+        src={this.state.profileImgFile}
+        style={{height: 400, width: '100%'}}
+        aspectRatio={1 / 1}
+        guides={false}/>
+        
+        <Button style={{marginTop: 30}}color="primary" variant="contained" onClick={this.onCrop.bind(this)}>Upload</Button>
+      </div>);
+
     return (
       <div>
+        <Modal
+          aria-labelledby="simple-modal-title"
+          aria-describedby="simple-modal-description"
+          open={this.state.editProfileImg}
+          onClose={this.handleEditProfileImgClose.bind(this)}>
+          <div style={getModalStyle()} className={classes.paper}>
+            {uploadModalContents}
+          </div>
+        </Modal>
         <Snackbar 
           anchorOrigin={{vertical: 'bottom', horizontal: 'left'}} 
           open={(this.state.errorMsg != null)} 
@@ -342,7 +423,11 @@ class Profile extends React.Component {
           alignItems="center"
           justify="center">
           <Grid justify="center" item xs={6}>
-            <Avatar className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
+            <Avatar onClick={() => {
+              if (this.state.editing) {
+                this.setState({ editProfileImg: true })
+              }
+              }} className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
           </Grid>
         </Grid>
         <Grid container
