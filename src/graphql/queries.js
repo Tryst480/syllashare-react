@@ -3,50 +3,44 @@
 
 export const getGroups = `query GetGroups {
   getGroups {
-    name
-    private
-    users {
-      id
-      username
-      firstName
-      lastName
-      picKey
-      school {
-        name
-        city
-        state
+    accepted
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
         picKey
       }
-    }
-    chats {
-      id
-      name
-      subject
+      chats {
+        id
+        name
+        subject
+      }
     }
   }
 }
 `;
 export const getGroup = `query GetGroup($groupName: String!) {
   getGroup(groupName: $groupName) {
-    name
-    private
-    users {
-      id
-      username
-      firstName
-      lastName
-      picKey
-      school {
-        name
-        city
-        state
+    accepted
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
         picKey
       }
-    }
-    chats {
-      id
-      name
-      subject
+      chats {
+        id
+        name
+        subject
+      }
     }
   }
 }
