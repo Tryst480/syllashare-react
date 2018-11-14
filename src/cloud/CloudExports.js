@@ -19,7 +19,10 @@ const AwsExports = {
                 endpoint: "https://1inkjjj8ek.execute-api.us-west-2.amazonaws.com/Prod",
                 region: "us-west-2"
             }
-        ]
+        ],
+        "aws_appsync_graphqlEndpoint": "https://ufbqzngurjeejp6wimjbohw6xe.appsync-api.us-west-2.amazonaws.com/graphql",
+        "aws_appsync_region": "us-west-2",
+        "aws_appsync_authenticationType": "AWS_IAM"
     },
     Storage: {
         bucket: 'syllasharedata', //REQUIRED -  Amazon S3 bucket

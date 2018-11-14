@@ -22,7 +22,18 @@ import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
 import Paper from '@material-ui/core/Paper';
 import Popper from '@material-ui/core/Popper';
+import CheckIcon from '@material-ui/icons/Check';
+import CloseIcon from '@material-ui/icons/Close';
+import UserSearcher from './UserSearcher';
+import Amplify, { API, graphqlOperation } from "aws-amplify";
+import { AwsExports } from './cloud/CloudExports';
+import * as queries from './graphql/queries';
+import * as mutations from './graphql/mutations';
 
+import { Modal, Button, Table, TableRow, TableCell, TableHead, TableBody,  Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
+
+
+Amplify.configure(AwsExports);
 
 const styles = theme => ({
   root: {
@@ -120,223 +131,105 @@ const styles = theme => ({
   },
 });
 
-const suggestions = [
-  { label: 'Accounting'},
-  { label: 'Aerospace Engineering'}, 
-  { label: 'Agriculture'}, 
-  { label: 'Anthropology'},
-  { label: 'Architecture'},
-  { label: 'Art'},
-  { label: 'Biology'},
-  { label: 'Bussiness'},
-  { label: 'Civil Engineering'},
-  { label: 'Chemimstry'}, 
-  { label: 'Chemical Engineering'}, 
-  { label: 'Computer Science'},     
-  { label: 'Commmunication'},   
-  { label: 'Dance'},   
-  { label: 'Econommics'},   
-  { label: 'Engineering'},   
-  { label: 'English'},   
-]
-
-function renderInputComponent(inputProps) {
-  const { classes, inputRef = () => {}, ref, ...other } = inputProps;
-
-  return (
-    <TextField
-      fullWidth
-      InputProps={{
-        inputRef: node => {
-          ref(node);
-          inputRef(node);
-        },
-        classes: {
-          input: classes.input,
-        },
-      }}
-      {...other}
-    />
-  );
-}
-
-function renderInputComponent(inputProps) {
-  const { classes, inputRef = () => {}, ref, ...other } = inputProps;
-
-  return (
-    <TextField
-      fullWidth
-      InputProps={{
-        inputRef: node => {
-          ref(node);
-          inputRef(node);
-        },
-        classes: {
-          input: classes.input,
-        },
-      }}
-      {...other}
-    />
-  );
-}
-
-function renderSuggestion(suggestion, { query, isHighlighted }) {
-  const matches = match(suggestion.label, query);
-  const parts = parse(suggestion.label, matches);
-
-  return (
-    <MenuItem selected={isHighlighted} component="div">
-      <div>
-        {parts.map((part, index) => {
-          return part.highlight ? (
-            <span key={String(index)} style={{ fontWeight: 500 }}>
-              {part.text}
-            </span>
-          ) : (
-            <strong key={String(index)} style={{ fontWeight: 300 }}>
-              {part.text}
-            </strong>
-          );
-        })}
-      </div>
-    </MenuItem>
-  );
-}
-
-function getSuggestions(value) {
-  const inputValue = deburr(value.trim()).toLowerCase();
-  const inputLength = inputValue.length;
-  let count = 0;
-
-  return inputLength === 0
-    ? []
-    : suggestions.filter(suggestion => {
-        const keep =
-          count < 5 && suggestion.label.slice(0, inputLength).toLowerCase() === inputValue;
-
-        if (keep) {
-          count += 1;
-        }
-
-        return keep;
-      });
-}
-
-function getSuggestionValue(suggestion) {
-  return suggestion.label;
-}
-
-
-
 class TopBar extends React.Component {
   state = {
-    anchorEl: null,
-    mobileMoreAnchorEl: null,
-    searchValue: '',
+    inviteMenuAnchor: null,
     single: '',
     popper: '',
-    suggestions: [],  
+    invitations: []
   };
+  
+  componentWillMount() {
+    if (this.props["syllaToken"] != null) {
+      this.getInvites();
+    }
+  }
 
+  componentWillReceiveProps(nextProps) {
+    if (nextProps["syllaToken"] != null) {
+      this.getInvites();
+    }
+  }
 
-  handleSuggestionsFetchRequested = ({ value }) => {
-    this.setState({
-      suggestions: getSuggestions(value),
-    });
-  };
+  getInvites() {
+    API.graphql(graphqlOperation(queries.getGroups)).then((myGroups) => {
+      console.log("GOT GROUPS: ", myGroups.data.getGroups)
+      var groups = [];
+      var invites = [];
+      for (var groupEntry of myGroups.data.getGroups) {
+          var group = groupEntry.group;
+          if (groupEntry.accepted) {
+              groups.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length + 1 })
+          } else {
+              invites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length + 1 })
+          }
+      }
+      this.setState({ "invitations": invites });
+    }).catch((err) => {
+      console.error("GetGroups error:", err);
+    })
+  }
 
-  handleSuggestionsClearRequested = () => {
-    this.setState({
-      suggestions: [],
-    });
-  };
+  acceptInvite(invitation) {
 
-  handleChange = name => (event, { newValue }) => {
-    this.setState({
-      [name]: newValue,
-    });
-  };
+  }
 
-  handleProfileMenuOpen = event => {
-    this.setState({ anchorEl: event.currentTarget });
-  };
+  removeInvite(invitation) {
 
-  handleMenuClose = () => {
-    this.setState({ anchorEl: null });
-    this.handleMobileMenuClose();
-  };
-
-  handleMobileMenuOpen = event => {
-    this.setState({ mobileMoreAnchorEl: event.currentTarget });
-  };
-
-  handleMobileMenuClose = () => {
-    this.setState({ mobileMoreAnchorEl: null });
-  };
+  }
 
   render() {
-    const { anchorEl, mobileMoreAnchorEl } = this.state;
     const { classes } = this.props;
-    const isMenuOpen = Boolean(anchorEl);
-    const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
 
-    const renderMenu = (
+    const renderInviteMenu = (
       <Menu
-        anchorEl={anchorEl}
+        id="invite-menu"
+        anchorEl={this.state.inviteMenuAnchor}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        open={isMenuOpen}
-        onClose={this.handleMenuClose}
+        open={this.state.inviteMenuAnchor != null}
+        onClose={() => {
+          this.setState({
+            inviteMenuAnchor: null
+          });
+        }}
       >
-        <MenuItem onClick={this.handleMenuClose}>Profile</MenuItem>
-        <MenuItem onClick={this.handleMenuClose}>My account</MenuItem>
+        <Table>
+          <TableBody>
+            {
+              this.state.invitations.map((invitation, i) => {
+                return (
+                  <TableRow>
+                    <TableCell><p>{invitation.name}</p></TableCell>
+                    <TableCell>
+                    <IconButton
+                        key="check"
+                        aria-label="Check"
+                        color="inherit"
+                        className={classes.close}
+                        onClick={() => { this.acceptInvite(invitation) }}>
+                        <CheckIcon />
+                      </IconButton>
+                      <IconButton
+                        key="close"
+                        aria-label="Close"
+                        color="inherit"
+                        className={classes.close}
+                        onClick={() => { this.removeInvite(invitation) }}>
+                        <CloseIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>)
+              })
+            }
+          </TableBody>
+        </Table>
       </Menu>
     );
-
-    const renderMobileMenu = (
-      <Menu
-        anchorEl={mobileMoreAnchorEl}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        open={isMobileMenuOpen}
-        onClose={this.handleMobileMenuClose}
-      >
-        <MenuItem>
-          <IconButton color="inherit">
-            <Badge badgeContent={4} color="secondary">
-              <MailIcon />
-            </Badge>
-          </IconButton>
-          <p>Messages</p>
-        </MenuItem>
-        <MenuItem>
-          <IconButton color="inherit">
-            <Badge badgeContent={11} color="secondary">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-          <p>Notifications</p>
-        </MenuItem>
-        <MenuItem onClick={this.handleProfileMenuOpen}>
-          <IconButton color="inherit">
-            <AccountCircle />
-          </IconButton>
-          <p>Profile</p>
-        </MenuItem>
-      </Menu>
-    );
-
-    const autosuggestProps = {
-      renderInputComponent,
-      suggestions: this.state.suggestions,
-      onSuggestionsFetchRequested: this.handleSuggestionsFetchRequested,
-      onSuggestionsClearRequested: this.handleSuggestionsClearRequested,
-      getSuggestionValue,
-      renderSuggestion,
-    };
 
     return (
       <div className={classes.root}>
+        {renderInviteMenu}
         <AppBar position="fixed">
           <Toolbar>
             <IconButton className={classes.menuButton} color="inherit" aria-label="Open drawer">
@@ -345,44 +238,15 @@ class TopBar extends React.Component {
             <Typography className={classes.title} variant="h6" color="inherit" noWrap>
               SyllaShare
             </Typography>
-            <div className={classes.search}>
-              <div className={classes.searchIcon}>
-                <SearchIcon />
-              </div>
-              <Autosuggest
-                {...autosuggestProps}
-                inputProps={{
-                  classes,
-                  value: this.state.popper,
-                  onChange: this.handleChange('popper'),
-                  inputRef: node => {
-                    this.popperNode = node;
-                  },
-                  InputLabelProps: {
-                    shrink: true,
-                  },
-                }}
-                theme={{
-                  suggestionsList: classes.suggestionsList,
-                  suggestion: classes.suggestion,
-                }}
-                renderSuggestionsContainer={options => (
-                  <Popper anchorEl={this.popperNode} open={Boolean(options.children)}>
-                    <Paper
-                      square
-                      {...options.containerProps}
-                      style={{ width: this.popperNode ? this.popperNode.clientWidth : null }}
-                    >
-                      {options.children}
-                    </Paper>
-                  </Popper>
-                )}
-              />
-            </div>
+            <UserSearcher excludedUsers={[]} />
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
-              <IconButton color="inherit">
-                <Badge badgeContent={4} color="secondary">
+              <IconButton 
+                color="inherit" 
+                onClick={ (event) => { this.setState({ "inviteMenuAnchor": event.currentTarget })} }
+                aria-owns={this.state.inviteMenuAnchor ? 'invite-menu' : undefined}
+                aria-haspopup="true">
+                <Badge badgeContent={this.state.invitations.length} color="secondary">
                   <MailIcon />
                 </Badge>
               </IconButton>
@@ -391,24 +255,9 @@ class TopBar extends React.Component {
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
-              <IconButton
-                aria-owns={isMenuOpen ? 'material-appbar' : null}
-                aria-haspopup="true"
-                onClick={this.handleProfileMenuOpen}
-                color="inherit"
-              >
-                <AccountCircle />
-              </IconButton>
-            </div>
-            <div className={classes.sectionMobile}>
-              <IconButton aria-haspopup="true" onClick={this.handleMobileMenuOpen} color="inherit">
-                <MoreIcon />
-              </IconButton>
             </div>
           </Toolbar>
         </AppBar>
-        {renderMenu}
-        {renderMobileMenu}
       </div>
     );
   }
