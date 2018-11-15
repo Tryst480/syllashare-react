@@ -3,7 +3,22 @@
 
 export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
   subJoinGroup(groupName: $groupName) {
-    groupName
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
+        picKey
+      }
+      chats {
+        id
+        name
+        subject
+      }
+    }
     user {
       id
       username
@@ -16,7 +31,22 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
 `;
 export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
   subLeaveGroup(groupName: $groupName) {
-    groupName
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
+        picKey
+      }
+      chats {
+        id
+        name
+        subject
+      }
+    }
     user {
       id
       username
@@ -29,7 +59,22 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
 `;
 export const subInviteToGroup = `subscription SubInviteToGroup($groupName: String!) {
   subInviteToGroup(groupName: $groupName) {
-    groupName
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
+        picKey
+      }
+      chats {
+        id
+        name
+        subject
+      }
+    }
     user {
       id
       username
@@ -42,7 +87,22 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
 `;
 export const subUserInviteToGroup = `subscription SubUserInviteToGroup($inviteToUserID: String!) {
   subUserInviteToGroup(inviteToUserID: $inviteToUserID) {
-    groupName
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
+        picKey
+      }
+      chats {
+        id
+        name
+        subject
+      }
+    }
     user {
       id
       username

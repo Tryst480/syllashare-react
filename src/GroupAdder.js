@@ -66,9 +66,17 @@ class GroupAdder extends Component {
     addGroup() {
         API.graphql(graphqlOperation(mutations.createGroup, {groupName: this.state.groupName, groupPrivate: !this.state.public})).then((minGroup) => {
             console.log("ADDED GROUP: ", JSON.stringify(minGroup));
+            for (var user of this.state.users) {
+                console.log("INVITING TO: ", user.id);
+                API.graphql(graphqlOperation(mutations.inviteToGroup, { groupName: this.state.groupName, inviteToUserID: user.id })).then((groupUserPair) => {
+                    console.log("INVITED TO GROUP: ", JSON.stringify(groupUserPair));
+                }).catch((err) => {
+                    console.error("Invite to Group ERR: ", err);
+                });
+            }
         }).catch((err) => {
             console.error("Create Group ERR: ", err);
-        })
+        });
     }
     
     onSnackClose() {

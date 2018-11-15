@@ -10,7 +10,22 @@ export const createGroup = `mutation CreateGroup($groupName: String!, $groupPriv
 `;
 export const joinGroup = `mutation JoinGroup($groupName: String!) {
   joinGroup(groupName: $groupName) {
-    groupName
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
+        picKey
+      }
+      chats {
+        id
+        name
+        subject
+      }
+    }
     user {
       id
       username
@@ -23,7 +38,22 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
 `;
 export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
   leaveGroup(groupName: $groupName) {
-    groupName
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
+        picKey
+      }
+      chats {
+        id
+        name
+        subject
+      }
+    }
     user {
       id
       username
@@ -36,7 +66,22 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
 `;
 export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $inviteToUserID: String!) {
   inviteToGroup(groupName: $groupName, inviteToUserID: $inviteToUserID) {
-    groupName
+    group {
+      name
+      private
+      users {
+        id
+        username
+        firstName
+        lastName
+        picKey
+      }
+      chats {
+        id
+        name
+        subject
+      }
+    }
     user {
       id
       username

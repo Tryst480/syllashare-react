@@ -5,6 +5,7 @@ import Amplify, { API, graphqlOperation } from "aws-amplify";
 import { AwsExports } from './cloud/CloudExports';
 import * as queries from './graphql/queries';
 import * as mutations from './graphql/mutations';
+import * as subscriptions from './graphql/subscriptions';
 import GroupAdder from './GroupAdder';
 
 Amplify.configure(AwsExports);
@@ -58,6 +59,7 @@ class GroupList extends Component {
 
     componentWillMount() {
         console.log("GETTING GROUPS");
+        this.subscribeToInvites();
         API.graphql(graphqlOperation(queries.getGroups)).then((myGroups) => {
             console.log("GOT GROUPS: ", myGroups.data.getGroups)
             var groups = [];
@@ -65,23 +67,76 @@ class GroupList extends Component {
             for (var groupEntry of myGroups.data.getGroups) {
                 var group = groupEntry.group;
                 if (groupEntry.accepted) {
-                    groups.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length + 1 })
+                    groups.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length })
                 } else {
-                    invites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length + 1 })
+                    invites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length })
                 }
             }
             this.setState({ "groups": groups, "invites": invites });
         }).catch((err) => {
             console.error("GetGroups error:", err);
-        })
+        });
     }
 
     acceptInvite(invite) {
-
+        API.graphql(graphqlOperation(mutations.joinGroup, {groupName: invite.name })).then((groupUserPair) => {
+            console.log("Joined Group", JSON.stringify(groupUserPair));
+            var i = 0;
+            for (var it of this.state.invites) {
+                if (it.name == invite.name) {
+                    var newInvites = this.state.invites;
+                    newInvites.splice(i, 1);
+                    var newGroups = this.state.groups;
+                    newGroups.push(invite);
+                    this.setState({
+                        invites: newInvites,
+                        groups: newGroups
+                    });
+                    return;
+                }
+                i++;
+            }
+        }).catch((err) => {
+            console.error("Join Group ERR: ", err);
+        })
     }
 
     declineInvite(invite) {
-        
+        API.graphql(graphqlOperation(mutations.leaveGroup, {groupName: invite.name })).then((groupUserPair) => {
+            console.log("LEFT GROUP: ", JSON.stringify(groupUserPair));
+            var i = 0;
+            for (var it of this.state.invites) {
+                if (it.name == invite.name) {
+                    var newInvites = this.state.invites;
+                    newInvites.splice(i, 1);
+                    this.setState({
+                        invites: newInvites
+                    });
+                    return;
+                }
+                i++;
+            }
+        }).catch((err) => {
+            console.error("Leave Group ERR: ", err);
+        })
+    }
+
+    subscribeToInvites() {
+        console.log("SUBSCRIBING TO INVITES FOR ID: ", this.props.userID)
+        API.graphql(graphqlOperation(subscriptions.subUserInviteToGroup, { "inviteToUserID": this.props.userID })).subscribe({
+            next: (groupUserPair) => {
+                console.log("INVITE RECEIVED: ", groupUserPair);
+                var group = groupUserPair["group"];
+                var newInvites = this.state.invites;
+                newInvites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length });
+                this.setState({
+                    invites: newInvites
+                });
+            },
+            error: (error) => {
+                console.log("SUBInviteERR", JSON.stringify(error));
+            }
+        })
     }
 
     render() {

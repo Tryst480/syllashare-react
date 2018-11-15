@@ -151,15 +151,15 @@ class Authenticator extends Component {
         return new Promise((resolve, reject) => {
             Auth.currentSession()
             .then(session => {
-                this.getSyllaToken().then((syllaToken) => {
+                this.getSyllaToken().then((syllaData) => {
                     var provider = "cognito";
-                    this.props.onAuthenticated(syllaToken, provider);
+                    this.props.onAuthenticated(syllaData["token"], syllaData["userID"], provider);
                     this.setState({
                         loading: false,
                         provider: provider,
-                        syllaToken: syllaToken
+                        syllaToken: syllaData["token"]
                     });
-                    resolve(syllaToken);
+                    resolve(syllaData["token"]);
                 });
             }).catch((err) => {
                 reject(err);
@@ -170,14 +170,14 @@ class Authenticator extends Component {
     signIn(provider, token) {
         return new Promise((resolve, reject) => {
             if (provider == null) {
-                this.getSyllaToken().then((syllaToken) => {
+                this.getSyllaToken().then((syllaData) => {
                     this.setState({
                         loading: false,
                         provider: provider,
-                        syllaToken: syllaToken
+                        syllaToken: syllaData["token"]
                     });
-                    this.props.onAuthenticated(syllaToken, provider);
-                    resolve(syllaToken);
+                    this.props.onAuthenticated(syllaData["token"], syllaData["userID"], provider);
+                    resolve(syllaData["token"]);
                 });
             } else {
                 Auth.federatedSignIn(
@@ -187,14 +187,14 @@ class Authenticator extends Component {
                         token: token
                     }
                 ).then(() => {
-                    this.getSyllaToken().then((syllaToken) => {
+                    this.getSyllaToken().then((syllaData) => {
                         this.setState({
                             loading: false,
                             provider: provider,
-                            syllaToken: syllaToken
+                            syllaToken: syllaData["token"]
                         });
-                        this.props.onAuthenticated(syllaToken, provider);
-                        resolve(syllaToken);
+                        this.props.onAuthenticated(syllaData["token"], syllaData["userID"], provider);
+                        resolve(syllaData["token"]);
                     });
                 });
             }
@@ -205,7 +205,8 @@ class Authenticator extends Component {
     getSyllaToken() {
         return new Promise((resolve, reject) => {
             API.put('SyllaShare', '/exchangetoken').then(response => {
-                resolve(response["token"]);
+                console.log("USERID: ", response["userID"]);
+                resolve( { "token": response["token"], "userID": response["userID"] } );
             }).catch(error => {
                 console.log(error);
             });

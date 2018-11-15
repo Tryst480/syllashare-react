@@ -592,7 +592,7 @@ class Profile extends React.Component {
               </Grid>
               <Grid item xm={8}>
                 <h1>Groups</h1>
-                <GroupList myUsername={this.state.user.username}/>
+                <GroupList myUsername={this.state.user.username} userID={this.props.userID}/>
               </Grid>
             </Grid>
           </Grid>

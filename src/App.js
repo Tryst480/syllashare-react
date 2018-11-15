@@ -41,15 +41,15 @@ class App extends Component {
       var authElms = <div />
       if (this.state.syllaToken != null) {
         authElms = (<div>
-          <Profile syllaToken={this.state.syllaToken}/>
+          <Profile syllaToken={this.state.syllaToken} userID={this.state.userID} />
         </div>);
       }
       return (<div>
         <TopBar syllaToken={this.state.syllaToken}/>
         <div style={{ height: '63px' }} />
-        <Authenticator onAuthenticated={(syllaToken) => {
-          console.log("ON AUTH: ", syllaToken);
-          this.setState({syllaToken: syllaToken});
+        <Authenticator onAuthenticated={(syllaToken, userID) => {
+          console.log("ON AUTH: ", syllaToken, ", ", userID);
+          this.setState({syllaToken: syllaToken, userID: userID});
         }} />
         {authElms}
       </div>);
