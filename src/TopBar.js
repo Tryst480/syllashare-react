@@ -23,7 +23,6 @@ import parse from 'autosuggest-highlight/parse';
 import Paper from '@material-ui/core/Paper';
 import Popper from '@material-ui/core/Popper';
 import Switch from '@material-ui/core/Switch';
-import Button from '@material-ui/core/Button';
 
 
 const styles = theme => ({
@@ -122,6 +121,11 @@ const styles = theme => ({
   },
   rightIcon: {
     marginLeft: theme.spacing.unit,
+  },
+  classOrUser: {
+    ...theme.typography.button,
+    backgroundColor: theme.palette.common.white,
+    padding: theme.spacing.unit,
   },
 });
 
@@ -356,9 +360,6 @@ class TopBar extends React.Component {
               SyllaShare
             </Typography>
             <div className={classes.search}>
-              <div className={classes.searchIcon}>
-                <SearchIcon />
-              </div>
               <Autosuggest
                 {...autosuggestProps}
                 inputProps={{
@@ -393,10 +394,9 @@ class TopBar extends React.Component {
               checked={this.state.checkedA}
               onChange={this.handleSwitch('checkedA')}
               value="checkedA"
+              color="default" 
             />
-            <Button variant="contained" color="secondary" className={classes.button}>
-              User
-            </Button>
+            <div className={classes.classOrUser}>{"Class/User"}</div>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton color="inherit">

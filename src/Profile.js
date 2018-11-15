@@ -17,7 +17,6 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import DoneIcon from '@material-ui/icons/Done';
 import Grow from '@material-ui/core/Grow';
 import Calendar from './Calendar';
-
 import GroupList from './GroupList';
 import ClassList from './ClassList';
 import ClassEdit from "./ClassEdit";
@@ -116,7 +115,7 @@ class Profile extends React.Component {
       schools: [],
       updating: false,
       errorMsg: null,
-        mainPage: true
+      mainPage: true
     };
   }
 
