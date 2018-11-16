@@ -58,10 +58,10 @@ class GroupList extends Component {
     }
 
     componentWillMount() {
-        console.log("GETTING GROUPS");
+        console.log("MOUNTING");
         this.subscribeToInvites();
         API.graphql(graphqlOperation(queries.getGroups)).then((myGroups) => {
-            console.log("GOT GROUPS: ", myGroups.data.getGroups)
+            console.log("GOT GROUPS: ", myGroups.data.getGroups);
             var groups = [];
             var invites = [];
             for (var groupEntry of myGroups.data.getGroups) {
@@ -75,6 +75,24 @@ class GroupList extends Component {
             this.setState({ "groups": groups, "invites": invites });
         }).catch((err) => {
             console.error("GetGroups error:", err);
+        });
+    }
+
+    componentWillUnmount() {
+        console.log("UNMOUNTING")
+        if (this.inviteSubscription != null) {
+            console.log("UNSUBSCRIBING!");
+            this.inviteSubscription.unsubscribe();
+            this.inviteSubscription = null;
+        }
+    }
+
+    onGroupAdded(group) {
+        var groups = this.state.groups;
+        groups.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": 1 });
+        this.setState({
+            "groups": groups,
+            "addingGroup": false
         });
     }
 
@@ -121,12 +139,23 @@ class GroupList extends Component {
         })
     }
 
-    subscribeToInvites() {
+    subscribeToInvites = () => {
+        if (this.inviteSubscription != null) {
+            console.log("UNSUBSCRIBING!");
+            this.inviteSubscription.unsubscribe();
+            this.inviteSubscription = null;
+        }
         console.log("SUBSCRIBING TO INVITES FOR ID: ", this.props.userID)
-        API.graphql(graphqlOperation(subscriptions.subUserInviteToGroup, { "inviteToUserID": this.props.userID })).subscribe({
+        this.inviteSubscription = API.graphql(graphqlOperation(subscriptions.subUserInviteToGroup, { "userID": this.props.userID })).subscribe({
             next: (groupUserPair) => {
-                console.log("INVITE RECEIVED: ", groupUserPair);
-                var group = groupUserPair["group"];
+                console.log("GOT NEW INVITE: ", groupUserPair);
+                var group = groupUserPair.value.data.subUserInviteToGroup["group"];
+                //Check if group is already added
+                for (var invite of this.state.invites) {
+                    if (invite.name == group.name) {
+                        return;
+                    }
+                }
                 var newInvites = this.state.invites;
                 newInvites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length });
                 this.setState({
@@ -136,7 +165,8 @@ class GroupList extends Component {
             error: (error) => {
                 console.log("SUBInviteERR", JSON.stringify(error));
             }
-        })
+        });
+        console.log("SET INVITE SUBSCRIPTION: ", this.inviteSubscription);
     }
 
     render() {
@@ -170,7 +200,7 @@ class GroupList extends Component {
                 open={this.state.addingGroup}
                 onClose={() => { this.setState({ addingGroup: false }) }}>
                 <div style={getModalStyle()} className={classes.modalPaper}>
-                    <GroupAdder myUsername={this.props.myUsername}/>
+                    <GroupAdder myUsername={this.props.myUsername} onGroupAdded={this.onGroupAdded.bind(this)}/>
                 </div>
             </Modal>
             <Paper className={classes.root}>

@@ -18,6 +18,7 @@ export const getGroups = `query GetGroups {
         id
         name
         subject
+        groupName
       }
     }
   }
@@ -40,6 +41,7 @@ export const getGroup = `query GetGroup($groupName: String!) {
         id
         name
         subject
+        groupName
       }
     }
   }
@@ -51,6 +53,7 @@ export const getMessages = `query GetMessages($chatID: String!) {
     text
     objKey
     creationEpochSecs
+    chatID
   }
 }
 `;

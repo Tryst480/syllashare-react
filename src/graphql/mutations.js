@@ -10,6 +10,8 @@ export const createGroup = `mutation CreateGroup($groupName: String!, $groupPriv
 `;
 export const joinGroup = `mutation JoinGroup($groupName: String!) {
   joinGroup(groupName: $groupName) {
+    userID
+    groupName
     group {
       name
       private
@@ -24,6 +26,7 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
         id
         name
         subject
+        groupName
       }
     }
     user {
@@ -38,6 +41,8 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
 `;
 export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
   leaveGroup(groupName: $groupName) {
+    userID
+    groupName
     group {
       name
       private
@@ -52,6 +57,7 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
         id
         name
         subject
+        groupName
       }
     }
     user {
@@ -66,6 +72,8 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
 `;
 export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $inviteToUserID: String!) {
   inviteToGroup(groupName: $groupName, inviteToUserID: $inviteToUserID) {
+    userID
+    groupName
     group {
       name
       private
@@ -80,6 +88,7 @@ export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $invit
         id
         name
         subject
+        groupName
       }
     }
     user {
@@ -105,6 +114,7 @@ export const createChat = `mutation CreateChat(
     id
     name
     subject
+    groupName
   }
 }
 `;
@@ -124,6 +134,7 @@ export const createMessage = `mutation CreateMessage(
     text
     objKey
     creationEpochSecs
+    chatID
   }
 }
 `;

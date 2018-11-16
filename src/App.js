@@ -45,7 +45,7 @@ class App extends Component {
         </div>);
       }
       return (<div>
-        <TopBar syllaToken={this.state.syllaToken}/>
+        <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} />
         <div style={{ height: '63px' }} />
         <Authenticator onAuthenticated={(syllaToken, userID) => {
           console.log("ON AUTH: ", syllaToken, ", ", userID);

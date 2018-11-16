@@ -29,6 +29,7 @@ import Amplify, { API, graphqlOperation } from "aws-amplify";
 import { AwsExports } from './cloud/CloudExports';
 import * as queries from './graphql/queries';
 import * as mutations from './graphql/mutations';
+import * as subscriptions from './graphql/subscriptions';
 
 import { Modal, Button, Table, TableRow, TableCell, TableHead, TableBody,  Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
 
@@ -136,17 +137,19 @@ class TopBar extends React.Component {
     inviteMenuAnchor: null,
     single: '',
     popper: '',
-    invitations: []
+    invites: []
   };
   
   componentWillMount() {
     if (this.props["syllaToken"] != null) {
+      this.subscribeToInvites(this.props);
       this.getInvites();
     }
   }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps["syllaToken"] != null) {
+      this.subscribeToInvites(nextProps);
       this.getInvites();
     }
   }
@@ -164,18 +167,79 @@ class TopBar extends React.Component {
               invites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length + 1 })
           }
       }
-      this.setState({ "invitations": invites });
+      this.setState({ "invites": invites });
     }).catch((err) => {
       console.error("GetGroups error:", err);
     })
   }
 
-  acceptInvite(invitation) {
-
+  subscribeToInvites(props) {
+    if (this.inviteSubscription != null) {
+        this.inviteSubscription.unsubscribe();
+        this.inviteSubscription = null;
+    }
+    var subReq = graphqlOperation(subscriptions.subUserInviteToGroup, { "userID": props.userID })
+    console.log("SUBREQ: ", subReq);
+    this.inviteSubscription = API.graphql(subReq).subscribe({
+        next: (groupUserPair) => {
+            console.log("GOT NEW INVITE TOP: ", groupUserPair);
+            var group = groupUserPair.value.data.subUserInviteToGroup["group"];
+            //Check if group is already added
+            for (var invite of this.state.invites) {
+              if (invite.name == group.name) {
+                return;
+              }
+            }
+            var newInvites = this.state.invites;
+            newInvites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length });
+            this.setState({
+                invites: newInvites
+            });
+        },
+        error: (error) => {
+            console.log("SUBInviteERR", JSON.stringify(error));
+        }
+    }) 
   }
 
-  removeInvite(invitation) {
+  acceptInvite(invite) {
+    API.graphql(graphqlOperation(mutations.joinGroup, {groupName: invite.name })).then((groupUserPair) => {
+      console.log("Joined Group", JSON.stringify(groupUserPair));
+      var i = 0;
+      for (var it of this.state.invites) {
+          if (it.name == invite.name) {
+              var newInvites = this.state.invites;
+              newInvites.splice(i, 1);
+              this.setState({
+                  invites: newInvites
+              });
+              return;
+          }
+          i++;
+      }
+    }).catch((err) => {
+        console.error("Join Group ERR: ", err);
+    })
+  }
 
+  declineInvite(invite) {
+    API.graphql(graphqlOperation(mutations.leaveGroup, {groupName: invite.name })).then((groupUserPair) => {
+      console.log("LEFT GROUP: ", JSON.stringify(groupUserPair));
+      var i = 0;
+      for (var it of this.state.invites) {
+          if (it.name == invite.name) {
+              var newInvites = this.state.invites;
+              newInvites.splice(i, 1);
+              this.setState({
+                  invites: newInvites
+              });
+              return;
+          }
+          i++;
+      }
+    }).catch((err) => {
+        console.error("Leave Group ERR: ", err);
+    })
   }
 
   render() {
@@ -197,7 +261,7 @@ class TopBar extends React.Component {
         <Table>
           <TableBody>
             {
-              this.state.invitations.map((invitation, i) => {
+              this.state.invites.map((invitation, i) => {
                 return (
                   <TableRow>
                     <TableCell><p>{invitation.name}</p></TableCell>
@@ -215,7 +279,7 @@ class TopBar extends React.Component {
                         aria-label="Close"
                         color="inherit"
                         className={classes.close}
-                        onClick={() => { this.removeInvite(invitation) }}>
+                        onClick={() => { this.declineInvite(invitation) }}>
                         <CloseIcon />
                       </IconButton>
                     </TableCell>
@@ -246,7 +310,7 @@ class TopBar extends React.Component {
                 onClick={ (event) => { this.setState({ "inviteMenuAnchor": event.currentTarget })} }
                 aria-owns={this.state.inviteMenuAnchor ? 'invite-menu' : undefined}
                 aria-haspopup="true">
-                <Badge badgeContent={this.state.invitations.length} color="secondary">
+                <Badge badgeContent={this.state.invites.length} color="secondary">
                   <MailIcon />
                 </Badge>
               </IconButton>

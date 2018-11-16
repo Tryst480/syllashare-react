@@ -3,6 +3,8 @@
 
 export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
   subJoinGroup(groupName: $groupName) {
+    userID
+    groupName
     group {
       name
       private
@@ -17,6 +19,7 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
         id
         name
         subject
+        groupName
       }
     }
     user {
@@ -31,6 +34,8 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
 `;
 export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
   subLeaveGroup(groupName: $groupName) {
+    userID
+    groupName
     group {
       name
       private
@@ -45,6 +50,7 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
         id
         name
         subject
+        groupName
       }
     }
     user {
@@ -59,6 +65,8 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
 `;
 export const subInviteToGroup = `subscription SubInviteToGroup($groupName: String!) {
   subInviteToGroup(groupName: $groupName) {
+    userID
+    groupName
     group {
       name
       private
@@ -73,6 +81,7 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
         id
         name
         subject
+        groupName
       }
     }
     user {
@@ -85,8 +94,10 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
   }
 }
 `;
-export const subUserInviteToGroup = `subscription SubUserInviteToGroup($inviteToUserID: String!) {
-  subUserInviteToGroup(inviteToUserID: $inviteToUserID) {
+export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: String!) {
+  subUserInviteToGroup(userID: $userID) {
+    userID
+    groupName
     group {
       name
       private
@@ -101,6 +112,7 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($inviteTo
         id
         name
         subject
+        groupName
       }
     }
     user {
@@ -118,6 +130,7 @@ export const subCreateChat = `subscription SubCreateChat($groupName: String!) {
     id
     name
     subject
+    groupName
   }
 }
 `;
@@ -127,6 +140,7 @@ export const subCreateMessage = `subscription SubCreateMessage($chatID: String!)
     text
     objKey
     creationEpochSecs
+    chatID
   }
 }
 `;
