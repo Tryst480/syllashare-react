@@ -264,7 +264,7 @@ class TopBar extends React.Component {
               this.state.invites.map((invitation, i) => {
                 return (
                   <TableRow>
-                    <TableCell><p>{invitation.name}</p></TableCell>
+                    <TableCell><p style={{ "font-size": 10, "margin-bottom": -8 }}>Join Group:</p><p>{invitation.name}</p></TableCell>
                     <TableCell>
                     <IconButton
                         key="check"
@@ -299,7 +299,7 @@ class TopBar extends React.Component {
             <IconButton className={classes.menuButton} color="inherit" aria-label="Open drawer">
               <MenuIcon />
             </IconButton>
-            <Typography className={classes.title} variant="h6" color="inherit" noWrap>
+            <Typography className={classes.title} onClick={this.props.onTitleClicked} variant="h6" color="inherit" noWrap>
               SyllaShare
             </Typography>
             <UserSearcher excludedUsers={[]} />

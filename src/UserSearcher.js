@@ -112,7 +112,7 @@ class UserSearcher extends React.Component {
             }}
             renderSuggestion={(suggestion) => {
                 return (<div>
-                  <Avatar style={{"float": "left"}} src={this.state.picMap[suggestion.username]} className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
+                  <Avatar style={{"float": "left"}} src={this.state.picMap[suggestion.username]} className={classNames(classes.blueAvatar, classes.bigAvatar)}>{suggestion.username.substr(0, 1).toUpperCase()}</Avatar>
                   <p>{suggestion.username}</p>
                 </div>)
             }}

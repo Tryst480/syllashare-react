@@ -21,6 +21,7 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -35,6 +36,7 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
       firstName
       lastName
       picKey
+      accepted
     }
   }
 }
@@ -52,6 +54,7 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -66,6 +69,7 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
       firstName
       lastName
       picKey
+      accepted
     }
   }
 }
@@ -83,6 +87,7 @@ export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $invit
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -97,6 +102,7 @@ export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $invit
       firstName
       lastName
       picKey
+      accepted
     }
   }
 }

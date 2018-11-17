@@ -183,7 +183,7 @@ class GroupList extends Component {
                 </TableHead>
                 <TableBody>
                 {this.state.invites.map((invite) => {
-                    return (<TableRow>
+                    return (<TableRow onClick={() => {this.props.onGroupSelected(invite.name)}}>
                         <TableCell>{invite.name}</TableCell>
                         <TableCell><Button onClick={() => {this.acceptInvite(invite)}}>Accept</Button></TableCell>
                         <TableCell><Button onClick={() => {this.declineInvite(invite)}}>Decline</Button></TableCell>
@@ -215,7 +215,7 @@ class GroupList extends Component {
                     <TableBody>
                     {this.state.groups.map(row => {
                         return (
-                        <TableRow key={row.id}>
+                        <TableRow key={row.id}  onClick={() => {this.props.onGroupSelected(row.name)}}>
                             <TableCell component="th" scope="row">
                             {row.name}
                             </TableCell>

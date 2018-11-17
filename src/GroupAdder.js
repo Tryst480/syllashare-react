@@ -146,7 +146,8 @@ class GroupAdder extends Component {
                     var newUsers = this.state.users;
                     newUsers.splice(i, 1);
                     this.setState({ "users": newUsers });
-                }}/>
+                }}
+                size={30} />
             <UserSearcher 
                 excludedUsers={excludedUsers}
                 onUserSelected={(user) => {

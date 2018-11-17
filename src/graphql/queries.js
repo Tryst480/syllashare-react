@@ -13,6 +13,7 @@ export const getGroups = `query GetGroups {
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -36,6 +37,7 @@ export const getGroup = `query GetGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id

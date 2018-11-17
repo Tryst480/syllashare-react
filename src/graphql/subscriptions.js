@@ -14,6 +14,7 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -28,6 +29,7 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
       firstName
       lastName
       picKey
+      accepted
     }
   }
 }
@@ -45,6 +47,7 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -59,6 +62,7 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
       firstName
       lastName
       picKey
+      accepted
     }
   }
 }
@@ -76,6 +80,7 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -90,6 +95,7 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
       firstName
       lastName
       picKey
+      accepted
     }
   }
 }
@@ -107,6 +113,7 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
         firstName
         lastName
         picKey
+        accepted
       }
       chats {
         id
@@ -121,6 +128,7 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
       firstName
       lastName
       picKey
+      accepted
     }
   }
 }

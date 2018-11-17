@@ -462,7 +462,7 @@ class Profile extends React.Component {
               if (this.state.editing) {
                 this.setState({ editProfileImg: true })
               }
-              }} src={this.state.picUrl} className={classNames(classes.blueAvatar, classes.bigAvatar)}>T</Avatar>
+              }} src={this.state.picUrl} className={classNames(classes.blueAvatar, classes.bigAvatar)}>{this.state.fields.username.substr(0,1).toUpperCase()}</Avatar>
           </Grid>
         </Grid>
         <Grid container
@@ -592,7 +592,7 @@ class Profile extends React.Component {
               </Grid>
               <Grid item xm={8}>
                 <h1>Groups</h1>
-                <GroupList myUsername={this.state.user.username} userID={this.props.userID}/>
+                <GroupList myUsername={this.state.user.username} userID={this.props.userID} onGroupSelected={this.props.onGroupSelected}/>
               </Grid>
             </Grid>
           </Grid>
