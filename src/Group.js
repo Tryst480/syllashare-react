@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Modal, Button, Grid, IconButton, Table, TableRow, TableCell, withStyles, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
+import { Modal, Button, Grid, Card, CardContent, IconButton, Table, TableRow, TableCell, withStyles, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress, CardActionArea } from '@material-ui/core';
 import PropTypes from 'prop-types';
 import Amplify, { API, graphqlOperation } from "aws-amplify";
 import { AwsExports } from './cloud/CloudExports';
@@ -12,6 +12,7 @@ import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import MailIcon from '@material-ui/icons/Mail';
 import { Parallax, Icon } from 'react-parallax';
 import UserSearcher from './UserSearcher'
+import ChatCreator from './ChatCreator';
 
 Amplify.configure(AwsExports);
 
@@ -80,7 +81,9 @@ class Group extends Component {
             users: [],
             invites: [],
             chats: [],
-            sendInviteUsers: []
+            sendInviteUsers: [],
+            createChatModal: false,
+            inviteModal: false
         };
     }
 
@@ -94,6 +97,7 @@ class Group extends Component {
             this.subscribeToInvites();
             this.subscribeToGroupJoin();
             this.subscribeToGroupLeave();
+            this.subscribeToChatCreation();
             var group = resp.data.getGroup["group"];
             var accepted = resp.data.getGroup["accepted"];
             var newUsers = [];
@@ -133,6 +137,10 @@ class Group extends Component {
         if (this.groupLeaveSubscription != null) {
             this.groupLeaveSubscription.unsubscribe();
             this.groupLeaveSubscription = null;
+        }
+        if (this.chatCreateSubscription != null) {
+            this.chatCreateSubscription.unsubscribe();
+            this.chatCreateSubscription = null;
         }
     }
 
@@ -300,6 +308,32 @@ class Group extends Component {
         });
     }
 
+    subscribeToChatCreation = () => {
+        if (this.chatCreateSubscription != null) {
+            this.chatCreateSubscription.unsubscribe();
+            this.chatCreateSubscription = null;
+        }
+
+        this.chatCreateSubscription = API.graphql(graphqlOperation(subscriptions.subCreateChat, { "groupName": this.props.groupName })).subscribe({
+            next: (data) => {
+                var chat = data.value.data.subCreateChat;
+                for (var existingChat of this.state.chats) {
+                    if (chat.id == existingChat.id) {
+                        return;
+                    }
+                }
+                var newChats = this.state.chats;
+                newChats.push(chat);
+                this.setState({
+                    "chats": newChats
+                });
+            },
+            error: (error) => {
+                console.log("SUBGroupLeaveERR", JSON.stringify(error));
+            }
+        });
+    }
+
     sendInvites() {
         var invitePromises = [];
         for (var user of this.state.sendInviteUsers) {
@@ -345,6 +379,15 @@ class Group extends Component {
                     <Button onClick={this.sendInvites.bind(this)}>Invite</Button>
                 </div>
             </Modal>
+            <Modal
+                aria-labelledby="simple-modal-title"
+                aria-describedby="simple-modal-description"
+                open={this.state.createChatModal}
+                onClose={() => { this.setState({ "createChatModal": false }) }}>
+                <div style={getModalStyle()} className={classes.modalPaper}>
+                    <ChatCreator groupName={this.props.groupName} onChatCreated={ () => {this.setState({ "createChatModal": false })}}/>
+                </div>
+            </Modal>
             <Parallax
                 bgImage={(this.state.schoolPicUrl == null)? require('./imgs/background.jpg'): this.state.schoolPicUrl}
                 bgImageAlt="School"
@@ -371,17 +414,47 @@ class Group extends Component {
                 </Grid>
             </Parallax>
             <br />
-            <Typography style={{"margin-left": 7}} variant="h4" gutterBottom>
-                Members
-            </Typography>
-            <UserChips users={this.state.users} size={45} />
+            <Grid container className={classes.demo} justify="center" spacing={32} xs={12}>
+                <Grid key={"0"} item xs={6} style={{"textAlign": "center"}}>
+                    <Typography style={{"margin-left": 7}} variant="h4" gutterBottom>
+                        Members
+                    </Typography>
+                    <UserChips users={this.state.users} size={45} />
+                </Grid>
+                <Grid key={"1"} item xs={6} style={{"textAlign": "center"}}>
+                    {
+                        (this.state.invites.length > 0)? (<Typography style={{"margin-left": 7 }} variant="h4" gutterBottom>
+                            Invitations
+                        </Typography>): null
+                    }
+                    <UserChips users={this.state.invites} size={30}  />
+                </Grid>
+            </Grid>
             <hr />
-            {
-                (this.state.invites.length > 0)? (<Typography style={{"margin-left": 7}} variant="h4" gutterBottom>
-                    Invitations
-                </Typography>): null
-            }
-            <UserChips users={this.state.invites} size={30}  />
+            <Grid container justify="center" spacing={32} xs={12}>
+                <Grid key={"0"} item xs={3} style={{"textAlign": "center"}} />
+                <Grid key={"0"} item xs={6} style={{"textAlign": "center"}}>
+                    <Paper className={classes.paper} style={{"textAlign": "center"}}>
+                        <Typography style={{"margin-left": 7, "textAlign": "center"}} variant="h3">Chats</Typography>
+                        { this.state.chats.map((chat) => {
+                            return (<Card className={classes.card}>
+                                <CardActionArea>
+                                    <CardContent>
+                                        <Typography variant="h5" component="h2">
+                                            {chat.name}
+                                        </Typography>
+                                    </CardContent>
+                                </CardActionArea>
+                            </Card>)
+                            })
+                        }
+                        <Button variant="contained" size="large" color="primary" className={classes.button} onClick={() => {this.setState({"createChatModal": true})}}>
+                            Create Chat
+                        </Button>
+                    </Paper>
+                </Grid>
+                <Grid key={"0"} item xs={3} style={{"textAlign": "center"}} />
+            </Grid>
         </div>);
 
         var renderNotInvited = (<div>
