@@ -41,34 +41,6 @@ class ClassEdit extends Component {
     render() {
         const { classes } = this.props;
         return (<div>
-            <Paper className={classes.root}>
-                <Table className={classes.table}>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Teacher</TableCell>
-                            <TableCell>Times</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {this.state.rows.map(row => {
-                            return (
-                                <TableRow key={row.id} onClick={() => this.props.profile.setState({
-                                    mainPage: true,
-                                    classEdit: false
-
-                                })}>
-                                    <TableCell component="th" scope="row">
-                                        {row.name}
-                                    </TableCell>
-                                    <TableCell>{row.teacher}</TableCell>
-                                    <TableCell>{row.times}</TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </Paper>
         </div>);
     }
 };
