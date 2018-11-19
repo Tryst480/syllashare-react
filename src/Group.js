@@ -10,6 +10,7 @@ import GroupAdder from './GroupAdder';
 import UserChips from './UserChips';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import MailIcon from '@material-ui/icons/Mail';
+import AddIcon from '@material-ui/icons/Add';
 import { Parallax, Icon } from 'react-parallax';
 import UserSearcher from './UserSearcher'
 import ChatCreator from './ChatCreator';
@@ -78,6 +79,7 @@ class Group extends Component {
             loading: true,
             invited: false,
             accepted: false,
+            private: true,
             users: [],
             invites: [],
             chats: [],
@@ -91,11 +93,6 @@ class Group extends Component {
         this.loadGroup(this.props);
     }
 
-    componentWillReceiveProps(props) {
-        this.unsubAll();
-        this.loadGroup(props);
-    }
-
     loadGroup(props) {
         API.graphql(graphqlOperation(queries.getGroup, { "groupName": props.groupName })).then((resp) => {
             console.log("GOT GROUP: ", this.props.groupName);
@@ -105,6 +102,7 @@ class Group extends Component {
             this.subscribeToChatCreation(props);
             var group = resp.data.getGroup["group"];
             var accepted = resp.data.getGroup["accepted"];
+            var groupPrivate = group["private"];
             var newUsers = [];
             var newInvites = [];
             for (var user of group.users) {
@@ -118,10 +116,10 @@ class Group extends Component {
             for (var chat of group.chats) {
                 newChats.push(chat);
             }
-            this.setState({ "users": newUsers, "invites": newInvites, "chats": newChats, "accepted": accepted, "loading": false, "invited": true });
+            this.setState({ "users": newUsers, "invites": newInvites, "chats": newChats, "accepted": accepted, "private": groupPrivate, "loading": false, "invited": true });
         }).catch((err) => {
             console.error("GetGroup error:", err);
-            this.subscribeToMyInvites();
+            this.subscribeToMyInvites(props);
             this.setState({ "loading": false, "invited": false });
         });
     }
@@ -361,7 +359,46 @@ class Group extends Component {
 
     render() {
         const { classes } = this.props;
-        
+        var header = null;
+        if (this.state.accepted) {
+            header = (<Grid container className={classes.demo} justify="center" spacing={32} xs={12}>
+                <Grid key={"0"} item className={classes.root} >
+                    <Button onClick={() => {this.setState({ "inviteModal": true })}} variant="extendedFab" aria-label="Invite" className={classes.button}>
+                        <MailIcon className={classes.extendedIcon} />
+                        Invite
+                    </Button>
+                </Grid>
+                <Grid key={"1"} item>
+                    <Typography component="h2" variant="h1" gutterBottom>
+                        {this.props.groupName}
+                    </Typography>
+                </Grid>
+                <Grid key={"2"} item className={classes.root} >
+                    <Button onClick={this.declineInvite.bind(this)} variant="extendedFab" aria-label="Invite" className={classes.button}>
+                        <ExitToAppIcon className={classes.extendedIcon} />
+                        Leave
+                    </Button>
+                </Grid>
+            </Grid>);
+        } else {
+            header = (<Grid container className={classes.demo} justify="center" spacing={32} xs={12}>
+                <Grid key={"0"} item className={classes.root} >
+                    
+                </Grid>
+                <Grid key={"1"} style={{"textAlign": "center", "marginBottom": 0}} item>
+                    <Typography component="h2" variant="h1" gutterBottom>
+                        {this.props.groupName}
+                    </Typography>
+                    <Button onClick={this.acceptInvite.bind(this)} variant="extendedFab" aria-label="Invite" className={classes.button} style={{"marginTop": 0}}>
+                        <AddIcon className={classes.extendedIcon} />
+                        Join
+                    </Button>
+                </Grid>
+                <Grid key={"2"} item className={classes.root} >
+                    
+                </Grid>
+            </Grid>);
+        }
         var renderInGroup = (<div>
             <Modal
                 aria-labelledby="simple-modal-title"
@@ -402,25 +439,7 @@ class Group extends Component {
                 bgImageAlt="School"
                 strength={300}>
                 <br />
-                <Grid container className={classes.demo} justify="center" spacing={32} xs={12}>
-                    <Grid key={"0"} item className={classes.root} >
-                        <Button onClick={() => {this.setState({ "inviteModal": true })}} variant="extendedFab" aria-label="Invite" className={classes.button}>
-                            <MailIcon className={classes.extendedIcon} />
-                            Invite
-                        </Button>
-                    </Grid>
-                    <Grid key={"1"} item>
-                        <Typography component="h2" variant="h1" gutterBottom>
-                            {this.props.groupName}
-                        </Typography>
-                    </Grid>
-                    <Grid key={"2"} item className={classes.root} >
-                        <Button onClick={this.declineInvite.bind(this)} variant="extendedFab" aria-label="Invite" className={classes.button}>
-                            <ExitToAppIcon className={classes.extendedIcon} />
-                            Leave
-                        </Button>
-                    </Grid>
-                </Grid>
+                {header}
             </Parallax>
             <br />
             <Grid container className={classes.demo} justify="center" spacing={32} xs={12}>
@@ -457,7 +476,7 @@ class Group extends Component {
                             </Card>)
                             })
                         }
-                        <Button variant="contained" size="large" color="primary" className={classes.button} onClick={() => {this.setState({"createChatModal": true})}}>
+                        <Button disabled={!this.state.accepted} variant="contained" size="large" color="primary" className={classes.button} onClick={() => {this.setState({"createChatModal": true})}}>
                             Create Chat
                         </Button>
                     </Paper>
@@ -500,7 +519,7 @@ class Group extends Component {
             </Grid> 
         </div>)
 
-        if (this.state.accepted) {
+        if (this.state.accepted || !this.state.private) {
             return renderInGroup;
         } else if (this.state.invited) {
             return renderInvited;

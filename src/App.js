@@ -117,7 +117,8 @@ class App extends Component {
                         });
                     }}
                     onUserSelected={this.onUserSelected.bind(this)}
-                    onLeave={() => {this.setState({ "groupName": null })}} />
+                    onLeave={() => {this.setState({ "groupName": null })}}
+                    key={this.state.groupName} />
             </div>)
         } else if (this.state.selectedUserID != null) {
             body = (<div>
