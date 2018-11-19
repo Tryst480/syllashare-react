@@ -16,6 +16,7 @@
     "react-addons-update": "^15.6.2",
     "react-autosuggest": "^9.4.2",
     "react-big-calendar-like-google": "0.0.3",
+    "react-chat-ui": "^0.3.2",
     "react-cropper": "^1.0.1",
     "react-dom": "^16.6.3",
     "react-dropzone": "^7.0.1",

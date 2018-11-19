@@ -51,11 +51,28 @@ export const getGroup = `query GetGroup($groupName: String!) {
 `;
 export const getMessages = `query GetMessages($chatID: String!) {
   getMessages(chatID: $chatID) {
-    id
-    text
-    objKey
-    creationEpochSecs
-    chatID
+    messages {
+      id
+      text
+      objKey
+      creationEpochSecs
+      chatID
+      senderID
+    }
+    senders {
+      id
+      username
+      firstName
+      lastName
+      picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
+      accepted
+    }
   }
 }
 `;

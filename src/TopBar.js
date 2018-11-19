@@ -147,6 +147,13 @@ class TopBar extends React.Component {
     }
   }
 
+  componentWillUnmount() {
+    if (this.inviteSubscription != null) {
+      this.inviteSubscription.unsubscribe();
+      this.inviteSubscription = null;
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
     if (nextProps["syllaToken"] != null) {
       this.subscribeToInvites(nextProps);

@@ -144,11 +144,23 @@ export const subCreateChat = `subscription SubCreateChat($groupName: String!) {
 `;
 export const subCreateMessage = `subscription SubCreateMessage($chatID: String!) {
   subCreateMessage(chatID: $chatID) {
-    id
-    text
-    objKey
-    creationEpochSecs
     chatID
+    message {
+      id
+      text
+      objKey
+      creationEpochSecs
+      chatID
+      senderID
+    }
+    sender {
+      id
+      username
+      firstName
+      lastName
+      picKey
+      accepted
+    }
   }
 }
 `;

@@ -136,11 +136,23 @@ export const createMessage = `mutation CreateMessage(
     objKey: $objKey
     creationEpochSecs: $creationEpochSecs
   ) {
-    id
-    text
-    objKey
-    creationEpochSecs
     chatID
+    message {
+      id
+      text
+      objKey
+      creationEpochSecs
+      chatID
+      senderID
+    }
+    sender {
+      id
+      username
+      firstName
+      lastName
+      picKey
+      accepted
+    }
   }
 }
 `;

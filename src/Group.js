@@ -438,7 +438,7 @@ class Group extends Component {
                         <Typography style={{"margin-left": 7, "textAlign": "center"}} variant="h3">Chats</Typography>
                         { this.state.chats.map((chat) => {
                             return (<Card className={classes.card}>
-                                <CardActionArea>
+                                <CardActionArea onClick={() => { this.props.onChatOpen(chat) }}>
                                     <CardContent>
                                         <Typography variant="h5" component="h2">
                                             {chat.name}
