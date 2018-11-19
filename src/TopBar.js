@@ -309,7 +309,7 @@ class TopBar extends React.Component {
             <Typography className={classes.title} onClick={this.props.onTitleClicked} variant="h6" color="inherit" noWrap>
               SyllaShare
             </Typography>
-            <UserSearcher excludedUsers={[]} />
+            <UserSearcher excludedUsers={[this.props.userID]} onUserSelected={(user) => {this.props.onUserSelected(user.id)}} />
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton 

@@ -181,7 +181,11 @@ class Profile extends React.Component {
       "fields": null,
       "user": null
     })
-    fetch(BackendExports.Url + '/api/getuser', 
+    var url = BackendExports.Url + '/api/getuser';
+    if (!this.props.thisUser) {
+      url += "?id=" + this.props.userID;
+    }
+    fetch(url, 
     {
         method: 'GET',
         headers: new Headers({
@@ -403,15 +407,17 @@ class Profile extends React.Component {
           bgImageAlt="School"
           strength={300}>
           <div style={{ height: '300px' }}>
-            <Button color="primary" variant="contained" className={classes.topRightCorner} onClick={() => {
-              this.setState({
-                user: null,
-                fields: null
-              });
-              Auth.signOut()
-            }}>
-              Log Out
-            </Button>
+            { (this.props.thisUser)? (
+              <Button color="primary" variant="contained" className={classes.topRightCorner} onClick={() => {
+                this.setState({
+                  user: null,
+                  fields: null
+                });
+                Auth.signOut()
+              }}>
+                Log Out
+              </Button>): <div />
+            }
             <Select
               style={{background: "#FFFFFF"}}
               value={(this.state.fields.school != null)? this.state.fields.school.name: "No School"}
@@ -519,71 +525,77 @@ class Profile extends React.Component {
               
             </form>
           </Grid>
-          <Grid item xs={18}>
-            <Grow in={!this.state.editing}>
-              <div className={(this.state.editing)? classes.gone: classes.visible}>
-                <Button variant="fab" color="primary" 
-                  aria-label="Edit" className={classes.button}
-                  onClick={() => {this.setState({editing: true})}}>
-                  <EditIcon />
-                </Button>
-              </div>
-            </Grow>
-          </Grid>
-          <Grid item xs={18}>
-            <Grow in={this.state.editing}>
-              <div>
-                {!this.state.updating && <div>
-                  <Button variant="fab"
-                    aria-label="Done" className={classes.greenButton}
-                    onClick={this.onUpdate.bind(this)}>
-                    <DoneIcon />
-                  </Button>
-                  
-                  <Button variant="fab"
-                    aria-label="Cancel" className={classes.redButton}
-                    onClick={this.onEditCancel.bind(this)}>
-                    <CancelIcon />
-                  </Button>
-                </div>}
-                {this.state.updating && <CircularProgress className={classes.progress} size={50} />}
-              </div>
-            </Grow>
-          </Grid>
-          <Grid item xs={18}>
-            <Paper className={classes.root}>
-              <Table className={classes.table}>
-                <TableHead>
-                    <TableRow>
-                      <TableCell className={classes.calButton}>Google Calendar</TableCell>
-                      <TableCell className={classes.calButton}>Microsoft Calendar</TableCell>
-                      <TableCell className={classes.calButton}>iPhone Calendar</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      { (this.state.user.providers.indexOf("google") < 0)
-                        ? <GoogleLogin
-                            className={classes.googleLogin}
-                            clientId={GcpExports.clientID}
-                            responseType="code"
-                            accessType="offline"
-                            scope="profile email"
-                            uxMode="redirect"
-                            redirect_uri="postmessage"
-                            onSuccess={this.onGoogleSignIn.bind(this)}
-                            onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
-                            <Button variant="contained" color="primary">
-                                Link
-                            </Button>
-                          </GoogleLogin>
-                        : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
-                      }
-                      <TableCell className={classes.calButton}><Button  variant="contained" color="primary">Link</Button></TableCell>
-                      <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
-                    </TableRow>
-                </TableHead>
-              </Table>
-            </Paper>
-          </Grid>
+          { (this.props.thisUser)? (<div>
+              <Grid item xs={18}>
+                <Grow in={!this.state.editing}>
+                  <div className={(this.state.editing)? classes.gone: classes.visible}>
+                    <Button variant="fab" color="primary" 
+                      aria-label="Edit" className={classes.button}
+                      onClick={() => {this.setState({editing: true})}}>
+                      <EditIcon />
+                    </Button>
+                  </div>
+                </Grow>
+              </Grid>
+              <Grid item xs={18}>
+                <Grow in={this.state.editing}>
+                  <div>
+                    {!this.state.updating && <div>
+                      <Button variant="fab"
+                        aria-label="Done" className={classes.greenButton}
+                        onClick={this.onUpdate.bind(this)}>
+                        <DoneIcon />
+                      </Button>
+                      
+                      <Button variant="fab"
+                        aria-label="Cancel" className={classes.redButton}
+                        onClick={this.onEditCancel.bind(this)}>
+                        <CancelIcon />
+                      </Button>
+                    </div>}
+                    {this.state.updating && <CircularProgress className={classes.progress} size={50} />}
+                  </div>
+                </Grow>
+              </Grid>
+            </div>): <div />
+          }
+          {
+            (this.props.thisUser)? (
+            <Grid item xs={18}>
+              <Paper className={classes.root}>
+                <Table className={classes.table}>
+                  <TableHead>
+                      <TableRow>
+                        <TableCell className={classes.calButton}>Google Calendar</TableCell>
+                        <TableCell className={classes.calButton}>Microsoft Calendar</TableCell>
+                        <TableCell className={classes.calButton}>iPhone Calendar</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        { (this.state.user.providers.indexOf("google") < 0)
+                          ? <GoogleLogin
+                              className={classes.googleLogin}
+                              clientId={GcpExports.clientID}
+                              responseType="code"
+                              accessType="offline"
+                              scope="profile email"
+                              uxMode="redirect"
+                              redirect_uri="postmessage"
+                              onSuccess={this.onGoogleSignIn.bind(this)}
+                              onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
+                              <Button variant="contained" color="primary">
+                                  Link
+                              </Button>
+                            </GoogleLogin>
+                          : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
+                        }
+                        <TableCell className={classes.calButton}><Button  variant="contained" color="primary">Link</Button></TableCell>
+                        <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
+                      </TableRow>
+                  </TableHead>
+                </Table>
+              </Paper>
+            </Grid>): <div />
+          }
           <Grid item xs={24}>
             <Grid container spacing={24}>
               <Grid item xm={8}>
@@ -592,7 +604,7 @@ class Profile extends React.Component {
               </Grid>
               <Grid item xm={8}>
                 <h1>Groups</h1>
-                <GroupList myUsername={this.state.user.username} userID={this.props.userID} onGroupSelected={this.props.onGroupSelected}/>
+                <GroupList myUsername={this.state.user.username} userID={this.props.userID} onGroupSelected={this.props.onGroupSelected} mutable={this.props.thisUser}/>
               </Grid>
             </Grid>
           </Grid>

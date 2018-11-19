@@ -254,7 +254,7 @@ class Chat extends Component {
                 "top": 0,
                 "right": 0,
                 "zIndex": 100000 }}>
-                <Typography variant="h3" style={{ "margin-left": 20, "display": "inline-block" }}>
+                <Typography variant="h4" style={{ "margin-left": 20, "display": "inline-block" }}>
                     {this.props.chatName}
                 </Typography>
                 <IconButton

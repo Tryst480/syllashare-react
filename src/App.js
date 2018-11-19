@@ -34,7 +34,8 @@ class App extends Component {
             syllaToken: null,
             userID: null,
             groupName: null,
-            chats: []
+            chats: [],
+            selectedUserID: null
         };
     }
 
@@ -42,38 +43,62 @@ class App extends Component {
         
     }
 
+    onUserSelected(userID) {
+        if (userID == this.state.userID) {
+            if (this.state.selectedUserID != null || this.state.groupName != null) {
+                window.history.back();
+            }
+        } else {
+            window.history.pushState('page2', 'Title', '/' + this.state.userID);
+            var listener = window.addEventListener('popstate', (event) => {
+                this.setState({
+                    "selectedUserID": null
+                });
+                window.removeEventListener('popstate', listener);
+            });
+            this.setState({
+                "selectedUserID": userID,
+                "groupName": null
+            });
+        }
+    }
+
+    onGroupSelected(groupName) {
+        window.history.pushState('page2', 'Title', '/' + groupName);
+        var listener = window.addEventListener('popstate', (event) => {
+            this.setState({
+                "groupName": null
+            });
+            window.removeEventListener('popstate', listener);
+        });
+        this.setState({
+            "groupName": groupName
+        });
+    }
+
     render() {
         var authElms = <div />
         if (this.state.syllaToken != null) {
             authElms = (<div>
-                <Profile syllaToken={this.state.syllaToken} userID={this.state.userID} onGroupSelected={(groupName) => {
-                    window.history.pushState('page2', 'Title', '/' + groupName);
-                    var listener = window.addEventListener('popstate', (event) => {
-                        this.setState({
-                            "groupName": null
-                        });
-                        window.removeEventListener('popstate', listener);
-                    });
-                    this.setState({
-                        "groupName": groupName
-                    });
-                }} />
+                <Profile syllaToken={this.state.syllaToken} thisUser={true} userID={this.state.userID} onGroupSelected={this.onGroupSelected.bind(this)} />
             </div>);
         }
         var body = null;
-        if (this.state.groupName == null) {
+        if (this.state.groupName == null && this.state.selectedUserID == null) {
             body = (<div>
-                <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} />
+                <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} onUserSelected={this.onUserSelected.bind(this)} />
                 <div style={{ height: '63px' }} />
                 <Authenticator onAuthenticated={(syllaToken, userID) => {
-                console.log("ON AUTH: ", syllaToken, ", ", userID);
-                this.setState({syllaToken: syllaToken, userID: userID});
+                    console.log("ON AUTH: ", syllaToken, ", ", userID);
+                    this.setState({syllaToken: syllaToken, userID: userID});
                 }} />
                 {authElms}
             </div>);
-        } else {
+        } else if (this.state.groupName != null) {
             body = (<div>
-                <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} onTitleClicked={() => {this.setState({ "groupName": null })}} />
+                <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} 
+                    onTitleClicked={() => {window.history.back()}} 
+                    onUserSelected={this.onUserSelected.bind(this)} />
                 <div style={{ height: '63px' }} />
                 <Group groupName={this.state.groupName} userID={this.state.userID}
                     onChatOpen={(chatInfo) => {
@@ -82,9 +107,19 @@ class App extends Component {
                         this.setState({
                             chats: newChats
                         });
-                    }} 
+                    }}
+                    onUserSelected={this.onUserSelected.bind(this)}
                     onLeave={() => {this.setState({ "groupName": null })}} />
             </div>)
+        } else if (this.state.selectedUserID != null) {
+            body = (<div>
+               <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID}
+                onTitleClicked={() => {window.history.back()}} 
+                onUserSelected={this.onUserSelected.bind(this)} />
+                <div style={{ height: '63px' }} />
+                <Profile syllaToken={this.state.syllaToken} userID={this.state.selectedUserID} thisUser={false}
+                    onGroupSelected={this.onGroupSelected.bind(this)} />
+                </div>);
         }
         return (<div>
             {body}
@@ -105,7 +140,8 @@ class App extends Component {
                                 var newChats = this.state.chats;
                                 newChats.splice(0, 1);
                                 this.setState({ "chats": newChats });
-                            }}/>
+                            }}
+                            onUserSelected={this.onUserSelected.bind(this)}/>
                     }
                 </div>): <div />
             }

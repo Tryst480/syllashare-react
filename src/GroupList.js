@@ -59,17 +59,25 @@ class GroupList extends Component {
 
     componentWillMount() {
         console.log("MOUNTING");
-        this.subscribeToInvites();
+        if (this.props.mutable) {
+            this.subscribeToInvites();
+        }
         API.graphql(graphqlOperation(queries.getGroups)).then((myGroups) => {
             console.log("GOT GROUPS: ", myGroups.data.getGroups);
             var groups = [];
             var invites = [];
             for (var groupEntry of myGroups.data.getGroups) {
                 var group = groupEntry.group;
+                var numMembers = 0;
+                for (var user of group.users) {
+                    if (user.accepted) {
+                        numMembers++;
+                    }
+                }
                 if (groupEntry.accepted) {
-                    groups.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length })
-                } else {
-                    invites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length })
+                    groups.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": numMembers })
+                } else if (this.props.mutable) {
+                    invites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": numMembers })
                 }
             }
             this.setState({ "groups": groups, "invites": invites });
@@ -157,7 +165,13 @@ class GroupList extends Component {
                     }
                 }
                 var newInvites = this.state.invites;
-                newInvites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": group.users.length });
+                var numMembers = 0;
+                for (var user of group.users) {
+                    if (user.accepted) {
+                        numMembers++;
+                    }
+                }
+                newInvites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": numMembers });
                 this.setState({
                     invites: newInvites
                 });
@@ -185,8 +199,8 @@ class GroupList extends Component {
                 {this.state.invites.map((invite) => {
                     return (<TableRow onClick={() => {this.props.onGroupSelected(invite.name)}}>
                         <TableCell>{invite.name}</TableCell>
-                        <TableCell><Button onClick={() => {this.acceptInvite(invite)}}>Accept</Button></TableCell>
-                        <TableCell><Button onClick={() => {this.declineInvite(invite)}}>Decline</Button></TableCell>
+                        <TableCell><Button onClick={(e) => {this.acceptInvite(invite); e.stopPropagation();}}>Accept</Button></TableCell>
+                        <TableCell><Button onClick={(e) => {this.declineInvite(invite); e.stopPropagation();}}>Decline</Button></TableCell>
                     </TableRow>)
                 })}
                 </TableBody>
@@ -228,11 +242,13 @@ class GroupList extends Component {
                 </Table>
                 
                 {renderInviteList}
-                <Button color="primary" 
-                  aria-label="Add" className={classes.button}
-                  onClick={() => {this.setState({ "addingGroup": true })}}>
-                  Create Group
-                </Button>
+                { (this.props.mutable)?
+                    <Button color="primary" 
+                    aria-label="Add" className={classes.button}
+                    onClick={() => {this.setState({ "addingGroup": true })}}>
+                    Create Group
+                    </Button>: <div />
+                }
             </Paper>
         </div>);
     }
