@@ -31,7 +31,8 @@ import * as queries from './graphql/queries';
 import * as mutations from './graphql/mutations';
 import * as subscriptions from './graphql/subscriptions';
 
-import { Modal, Button, Table, TableRow, TableCell, TableHead, TableBody,  Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
+import { Modal, Button, FormControl, InputLabel, Select, Table, TableRow, TableCell, TableHead, TableBody,  Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
+import GroupSearcher from './GroupSearcher';
 
 
 Amplify.configure(AwsExports);
@@ -46,6 +47,10 @@ const styles = theme => ({
   menuButton: {
     marginLeft: -12,
     marginRight: 20,
+  },
+  formControl: {
+    margin: theme.spacing.unit,
+    minWidth: 120,
   },
   title: {
     display: 'none',
@@ -137,7 +142,8 @@ class TopBar extends React.Component {
     inviteMenuAnchor: null,
     single: '',
     popper: '',
-    invites: []
+    invites: [],
+    searchMode: 'users'
   };
   
   componentWillMount() {
@@ -298,6 +304,13 @@ class TopBar extends React.Component {
       </Menu>
     );
 
+    var searchBar = null;
+    if (this.state.searchMode == "users") {
+      searchBar = <UserSearcher excludedUsers={[this.props.userID]} onUserSelected={(user) => {this.props.onUserSelected(user.id)}} />
+    } else if (this.state.searchMode == "groups") {
+      searchBar = <GroupSearcher onGroupSelected={(group) => {this.props.onGroupSelected(group.name)}} />
+    }
+
     return (
       <div className={classes.root}>
         {renderInviteMenu}
@@ -309,7 +322,32 @@ class TopBar extends React.Component {
             <Typography className={classes.title} onClick={this.props.onTitleClicked} variant="h6" color="inherit" noWrap>
               SyllaShare
             </Typography>
-            <UserSearcher excludedUsers={[this.props.userID]} onUserSelected={(user) => {this.props.onUserSelected(user.id)}} />
+            {
+              searchBar
+            }
+            
+            <FormControl className={classes.formControl}>
+              <InputLabel style={{"color": "white"}} htmlFor="searchMode-simple">SearchMode</InputLabel>
+              <Select
+                style={{"color": "white"}}
+                value={this.state.searchMode}
+                onChange={(e) => {this.setState({searchMode: e.target.value})}}
+                inputProps={{
+                  name: 'searchMode',
+                  id: 'searchMode-simple',
+                }}
+              >
+                <MenuItem value={"users"}>
+                  Users
+                </MenuItem>
+                <MenuItem value={"groups"}>
+                  Groups
+                </MenuItem>
+                <MenuItem value={"classes"}>
+                  Classes
+                </MenuItem>
+              </Select>
+            </FormControl>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton 

@@ -76,3 +76,10 @@ export const getMessages = `query GetMessages($chatID: String!) {
   }
 }
 `;
+export const searchGroups = `query SearchGroups($query: String!) {
+  searchGroups(query: $query) {
+    name
+    private
+  }
+}
+`;

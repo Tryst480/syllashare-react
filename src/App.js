@@ -80,13 +80,20 @@ class App extends Component {
         var authElms = <div />
         if (this.state.syllaToken != null) {
             authElms = (<div>
-                <Profile syllaToken={this.state.syllaToken} thisUser={true} userID={this.state.userID} onGroupSelected={this.onGroupSelected.bind(this)} />
+                <Profile syllaToken={this.state.syllaToken} 
+                    thisUser={true} 
+                    userID={this.state.userID} 
+                    onGroupSelected={this.onGroupSelected.bind(this)}
+                    key={this.state.userID} />
             </div>);
         }
         var body = null;
         if (this.state.groupName == null && this.state.selectedUserID == null) {
             body = (<div>
-                <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} onUserSelected={this.onUserSelected.bind(this)} />
+                <TopBar syllaToken={this.state.syllaToken} 
+                    userID={this.state.userID} 
+                    onUserSelected={this.onUserSelected.bind(this)}
+                    onGroupSelected={this.onGroupSelected.bind(this)} />
                 <div style={{ height: '63px' }} />
                 <Authenticator onAuthenticated={(syllaToken, userID) => {
                     console.log("ON AUTH: ", syllaToken, ", ", userID);
@@ -98,7 +105,8 @@ class App extends Component {
             body = (<div>
                 <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} 
                     onTitleClicked={() => {window.history.back()}} 
-                    onUserSelected={this.onUserSelected.bind(this)} />
+                    onUserSelected={this.onUserSelected.bind(this)}
+                    onGroupSelected={this.onGroupSelected.bind(this)} />
                 <div style={{ height: '63px' }} />
                 <Group groupName={this.state.groupName} userID={this.state.userID}
                     onChatOpen={(chatInfo) => {
@@ -115,10 +123,12 @@ class App extends Component {
             body = (<div>
                <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID}
                 onTitleClicked={() => {window.history.back()}} 
-                onUserSelected={this.onUserSelected.bind(this)} />
+                onUserSelected={this.onUserSelected.bind(this)}
+                onGroupSelected={this.onGroupSelected.bind(this)} />
                 <div style={{ height: '63px' }} />
                 <Profile syllaToken={this.state.syllaToken} userID={this.state.selectedUserID} thisUser={false}
-                    onGroupSelected={this.onGroupSelected.bind(this)} />
+                    onGroupSelected={this.onGroupSelected.bind(this)}
+                    key={this.state.selectedUserID} />
                 </div>);
         }
         return (<div>

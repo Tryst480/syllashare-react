@@ -88,16 +88,21 @@ class Group extends Component {
     }
 
     componentWillMount() {
-        this.loadGroup();
+        this.loadGroup(this.props);
     }
 
-    loadGroup() {
-        API.graphql(graphqlOperation(queries.getGroup, { "groupName": this.props.groupName })).then((resp) => {
+    componentWillReceiveProps(props) {
+        this.unsubAll();
+        this.loadGroup(props);
+    }
+
+    loadGroup(props) {
+        API.graphql(graphqlOperation(queries.getGroup, { "groupName": props.groupName })).then((resp) => {
             console.log("GOT GROUP: ", this.props.groupName);
-            this.subscribeToInvites();
-            this.subscribeToGroupJoin();
-            this.subscribeToGroupLeave();
-            this.subscribeToChatCreation();
+            this.subscribeToInvites(props);
+            this.subscribeToGroupJoin(props);
+            this.subscribeToGroupLeave(props);
+            this.subscribeToChatCreation(props);
             var group = resp.data.getGroup["group"];
             var accepted = resp.data.getGroup["accepted"];
             var newUsers = [];
@@ -121,7 +126,7 @@ class Group extends Component {
         });
     }
 
-    componentWillUnmount() {
+    unsubAll() {
         if (this.inviteSubscription != null) {
             this.inviteSubscription.unsubscribe();
             this.inviteSubscription = null;
@@ -142,6 +147,10 @@ class Group extends Component {
             this.chatCreateSubscription.unsubscribe();
             this.chatCreateSubscription = null;
         }
+    }
+
+    componentWillUnmount() {
+        this.unsubAll();
     }
 
     acceptInvite() {
@@ -176,16 +185,16 @@ class Group extends Component {
         })
     }
 
-    subscribeToMyInvites = () => {
+    subscribeToMyInvites = (props) => {
         if (this.myInviteSubscription != null) {
             this.myInviteSubscription.unsubscribe();
             this.myInviteSubscription = null;
         }
 
-        this.myInviteSubscription = API.graphql(graphqlOperation(subscriptions.subUserInviteToGroup, { "userID": this.props.userID })).subscribe({
+        this.myInviteSubscription = API.graphql(graphqlOperation(subscriptions.subUserInviteToGroup, { "userID": props.userID })).subscribe({
             next: (groupUserPair) => {
                 var group = groupUserPair.value.data.subUserInviteToGroup["group"];
-                if (group.name == this.props.groupName) {
+                if (group.name == props.groupName) {
                     this.loadGroup();
                     this.myInviteSubscription.unsubscribe();
                     this.myInviteSubscription = null;
@@ -198,13 +207,13 @@ class Group extends Component {
         });
     }
 
-    subscribeToInvites = () => {
+    subscribeToInvites = (props) => {
         if (this.inviteSubscription != null) {
             this.inviteSubscription.unsubscribe();
             this.inviteSubscription = null;
         }
 
-        this.inviteSubscription = API.graphql(graphqlOperation(subscriptions.subInviteToGroup, { "groupName": this.props.groupName })).subscribe({
+        this.inviteSubscription = API.graphql(graphqlOperation(subscriptions.subInviteToGroup, { "groupName": props.groupName })).subscribe({
             next: (groupUserPair) => {
                 var user = groupUserPair.value.data.subInviteToGroup["user"];
                 //Check if group is already added
@@ -225,13 +234,13 @@ class Group extends Component {
         });
     }
 
-    subscribeToGroupJoin = () => {
+    subscribeToGroupJoin = (props) => {
         if (this.groupJoinSubscription != null) {
             this.groupJoinSubscription.unsubscribe();
             this.groupJoinSubscription = null;
         }
 
-        this.groupJoinSubscription = API.graphql(graphqlOperation(subscriptions.subJoinGroup, { "groupName": this.props.groupName })).subscribe({
+        this.groupJoinSubscription = API.graphql(graphqlOperation(subscriptions.subJoinGroup, { "groupName": props.groupName })).subscribe({
             next: (groupUserPair) => {
                 var user = groupUserPair.value.data.subJoinGroup["user"];
                 //Stop if user is already a member
@@ -265,13 +274,13 @@ class Group extends Component {
         });
     }
 
-    subscribeToGroupLeave = () => {
+    subscribeToGroupLeave = (props) => {
         if (this.groupLeaveSubscription != null) {
             this.groupLeaveSubscription.unsubscribe();
             this.groupLeaveSubscription = null;
         }
 
-        this.groupLeaveSubscription = API.graphql(graphqlOperation(subscriptions.subLeaveGroup, { "groupName": this.props.groupName })).subscribe({
+        this.groupLeaveSubscription = API.graphql(graphqlOperation(subscriptions.subLeaveGroup, { "groupName": props.groupName })).subscribe({
             next: (groupUserPair) => {
                 var user = groupUserPair.value.data.subLeaveGroup["user"];
 
@@ -308,13 +317,13 @@ class Group extends Component {
         });
     }
 
-    subscribeToChatCreation = () => {
+    subscribeToChatCreation = (props) => {
         if (this.chatCreateSubscription != null) {
             this.chatCreateSubscription.unsubscribe();
             this.chatCreateSubscription = null;
         }
 
-        this.chatCreateSubscription = API.graphql(graphqlOperation(subscriptions.subCreateChat, { "groupName": this.props.groupName })).subscribe({
+        this.chatCreateSubscription = API.graphql(graphqlOperation(subscriptions.subCreateChat, { "groupName": props.groupName })).subscribe({
             next: (data) => {
                 var chat = data.value.data.subCreateChat;
                 for (var existingChat of this.state.chats) {
