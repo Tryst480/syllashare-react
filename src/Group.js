@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Modal, Button, Grid, Card, CardContent, IconButton, Table, TableRow, TableCell, withStyles, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress, CardActionArea } from '@material-ui/core';
+import { Modal, Button, Grid, Card, CardContent, FormLabel, FormControlLabel, Switch, IconButton, Table, TableRow, TableCell, withStyles, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress, CardActionArea } from '@material-ui/core';
 import PropTypes from 'prop-types';
 import Amplify, { API, graphqlOperation } from "aws-amplify";
 import { AwsExports } from './cloud/CloudExports';
@@ -79,13 +79,16 @@ class Group extends Component {
             loading: true,
             invited: false,
             accepted: false,
-            private: true,
+            writable: false,
+            readPrivate: true,
+            writePrivate: true,
             users: [],
             invites: [],
             chats: [],
             sendInviteUsers: [],
             createChatModal: false,
-            inviteModal: false
+            inviteModal: false,
+            writableInvites: true
         };
     }
 
@@ -102,10 +105,15 @@ class Group extends Component {
             this.subscribeToChatCreation(props);
             var group = resp.data.getGroup["group"];
             var accepted = resp.data.getGroup["accepted"];
-            var groupPrivate = group["private"];
+            var writable = resp.data.getGroup["writable"];
+            var readPrivate = group["readPrivate"];
+            var writePrivate = group["writePrivate"];
             var newUsers = [];
             var newInvites = [];
             for (var user of group.users) {
+                if (user.writable) {
+                    user.color = "#89CFF0";
+                }
                 if (user.accepted) {
                     newUsers.push(user);
                 } else {
@@ -116,7 +124,7 @@ class Group extends Component {
             for (var chat of group.chats) {
                 newChats.push(chat);
             }
-            this.setState({ "users": newUsers, "invites": newInvites, "chats": newChats, "accepted": accepted, "private": groupPrivate, "loading": false, "invited": true });
+            this.setState({ "users": newUsers, "invites": newInvites, "chats": newChats, "accepted": accepted, "writable": writable, "readPrivate": readPrivate, "writePrivate": writePrivate, "loading": false, "invited": true });
         }).catch((err) => {
             console.error("GetGroup error:", err);
             this.subscribeToMyInvites(props);
@@ -155,10 +163,19 @@ class Group extends Component {
         this.setState({
             "loading": true
         });
-        API.graphql(graphqlOperation(mutations.joinGroup, { groupName: this.props.groupName })).then((groupUserPair) => {
-            console.log("JOINED GROUP");
+        API.graphql(graphqlOperation(mutations.joinGroup, { groupName: this.props.groupName })).then((data) => {
+            var group = data.data.joinGroup["group"];
+            var thisUser = null;
+            for (var user of group["users"]) {
+                if (user.id == this.props.userID) {
+                    thisUser = user;
+                    break;
+                }
+            }
+            console.log("WRITABLE: ", thisUser);
             this.setState({
                 "accepted": true,
+                "writable": thisUser["writable"],
                 "loading": false
             });
         }).catch((err) => {
@@ -180,6 +197,44 @@ class Group extends Component {
             });
         }).catch((err) => {
             console.error("Leave Group ERR: ", err);
+        })
+    }
+
+    setWritable(userID, writable) {
+        API.graphql(graphqlOperation(mutations.setWritable, { groupName: this.props.groupName, setUserID: userID, writable: writable })).then((userWritablePair) => {
+            for (var user of this.state.users) {
+                if (user.id == userID) {
+                    if (writable) {
+                        user.color = "#89CFF0";
+                    } else {
+                        user.color = null;
+                    }
+                    user.writable = writable;
+                }
+            }
+            for (var user of this.state.invites) {
+                if (user.id == userID) {
+                    if (writable) {
+                        user.color = "#89CFF0";
+                    } else {
+                        user.color = null;
+                    }
+                    user.writable = writable;
+                }
+            }
+        }).catch((err) => {
+            console.error("Set Writable ERR: ", err);
+        })
+    }
+
+    kickUser(userID) {
+        API.graphql(graphqlOperation(mutations.leaveGroup, {groupName: this.props.groupName, kickUserID: userID })).then((groupUserPair) => {
+            console.log("User Kicked: ", JSON.stringify(groupUserPair));
+            this.setState({
+                "editUser": null
+            });
+        }).catch((err) => {
+            console.error("Kick Group ERR: ", err);
         })
     }
 
@@ -219,6 +274,11 @@ class Group extends Component {
                     if (invite.id == user.id) {
                         return;
                     }
+                }
+                if (user["writable"]) {
+                    user["color"] = "#89CFF0"
+                } else {
+                    user["color"] = null;
                 }
                 var newInvites = this.state.invites;
                 newInvites.push(user);
@@ -260,6 +320,12 @@ class Group extends Component {
                 }
                 
                 var newUsers = this.state.users;
+                console.log("USER JOIN", user);
+                if (user["writable"]) {
+                    user["color"] = "#89CFF0"
+                } else {
+                    user["color"] = null;
+                }
                 newUsers.push(user);
                 this.setState({
                     "invites": newInvites,
@@ -344,7 +410,7 @@ class Group extends Component {
     sendInvites() {
         var invitePromises = [];
         for (var user of this.state.sendInviteUsers) {
-            invitePromises.push(API.graphql(graphqlOperation(mutations.inviteToGroup, { groupName: this.props.groupName, inviteToUserID: user.id })));
+            invitePromises.push(API.graphql(graphqlOperation(mutations.inviteToGroup, { groupName: this.props.groupName, inviteToUserID: user.id, write: this.state.writableInvites })));
         }
         Promise.all(invitePromises).then((results) => {
             this.setState({
@@ -363,7 +429,7 @@ class Group extends Component {
         if (this.state.accepted) {
             header = (<Grid container className={classes.demo} justify="center" spacing={32} xs={12}>
                 <Grid key={"0"} item className={classes.root} >
-                    <Button onClick={() => {this.setState({ "inviteModal": true })}} variant="extendedFab" aria-label="Invite" className={classes.button}>
+                    <Button disabled={this.state.writePrivate && !this.state.writable } onClick={() => {this.setState({ "inviteModal": true })}} variant="extendedFab" aria-label="Invite" className={classes.button}>
                         <MailIcon className={classes.extendedIcon} />
                         Invite
                     </Button>
@@ -422,7 +488,30 @@ class Group extends Component {
                                 "sendInviteUsers": newUsers
                             });
                         }}/>
+                    {
+                        (this.state.writePrivate && this.state.readPrivate)? (<div>
+                        <FormLabel component="legend">User Privileges</FormLabel>
+                        <FormControlLabel control={<Switch
+                            label="Allow Write"
+                            checked={this.state.writableInvites}
+                            onChange={(evt) => {this.setState({ writableInvites: evt.target.checked })}}
+                            value={this.state.writableInvites}
+                            />} label={(this.state.writableInvites)? "Full Access": "Read Only"} /></div>): <div />
+                    }
                     <Button onClick={this.sendInvites.bind(this)}>Invite</Button>
+                </div>
+            </Modal>
+            <Modal
+                aria-labelledby="simple-modal-title"
+                aria-describedby="simple-modal-description"
+                open={this.state.editUser != null}
+                onClose={() => { this.setState({ "editUser": null }) }}>
+                <div style={getModalStyle()} className={classes.modalPaper}>
+                    <Typography style={{"margin-left": 7}} variant="h4" gutterBottom>
+                        {(this.state.editUser != null)? this.state.editUser.username: ""}
+                    </Typography>
+                    <Button onClick={() => {this.setWritable(this.state.editUser.id, !this.state.editUser.writable)}}>{(this.state.editUser != null && this.state.editUser.writable)? "Limit To Read Only": "Allow Full Access"}</Button>
+                    <Button onClick={() => {this.kickUser(this.state.editUser.id)}}>Remove From Group</Button>
                 </div>
             </Modal>
             <Modal
@@ -447,7 +536,7 @@ class Group extends Component {
                     <Typography style={{"margin-left": 7}} variant="h4" gutterBottom>
                         Members
                     </Typography>
-                    <UserChips users={this.state.users} size={45} />
+                    <UserChips users={this.state.users} onUserEdit={(this.state.writable)? (user) => {this.setState({"editUser": user})}: null} size={45} />
                 </Grid>
                 <Grid key={"1"} item xs={6} style={{"textAlign": "center"}}>
                     {
@@ -476,7 +565,7 @@ class Group extends Component {
                             </Card>)
                             })
                         }
-                        <Button disabled={!this.state.accepted} variant="contained" size="large" color="primary" className={classes.button} onClick={() => {this.setState({"createChatModal": true})}}>
+                        <Button disabled={this.state.writePrivate && !this.state.writable} variant="contained" size="large" color="primary" className={classes.button} onClick={() => {this.setState({"createChatModal": true})}}>
                             Create Chat
                         </Button>
                     </Paper>
@@ -519,7 +608,7 @@ class Group extends Component {
             </Grid> 
         </div>)
 
-        if (this.state.accepted || !this.state.private) {
+        if (this.state.accepted || !this.state.readPrivate) {
             return renderInGroup;
         } else if (this.state.invited) {
             return renderInvited;

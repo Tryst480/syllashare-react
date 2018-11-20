@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, TextField, Switch, IconButton, Snackbar, Chip, Avatar, Table, TableRow, TableCell, withStyles, FormControlLabel, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
+import { Button, TextField, Switch, IconButton, Snackbar, FormLabel, Chip, Avatar, Table, TableRow, TableCell, withStyles, FormControlLabel, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
 import PropTypes from 'prop-types';
 import UserSearcher from './UserSearcher';
 import CloseIcon from '@material-ui/icons/Close';
@@ -51,7 +51,9 @@ class GroupAdder extends Component {
         super();
         this.state = {
             groupName: "",
-            public: false,
+            readPublic: false,
+            writePublic: false,
+            writableInvites: true,
             users: [],
             errorMsg: null
         };
@@ -64,14 +66,13 @@ class GroupAdder extends Component {
     }
 
     addGroup() {
-        console.log("GRAPH OP: ", graphqlOperation(mutations.createGroup, {groupName: this.state.groupName, groupPrivate: !this.state.public}));
-        API.graphql(graphqlOperation(mutations.createGroup, {groupName: this.state.groupName, groupPrivate: !this.state.public})).then((minGroup) => {
+        API.graphql(graphqlOperation(mutations.createGroup, {groupName: this.state.groupName, readPrivate: !this.state.readPublic, writePrivate: !this.state.writePublic})).then((minGroup) => {
             var invitePromises = [];
             for (var user of this.state.users) {
-                invitePromises.push(API.graphql(graphqlOperation(mutations.inviteToGroup, { groupName: this.state.groupName, inviteToUserID: user.id })));
+                invitePromises.push(API.graphql(graphqlOperation(mutations.inviteToGroup, { groupName: this.state.groupName, inviteToUserID: user.id, write: this.state.writableInvites })));
             }
             Promise.all(invitePromises).then((results) => {
-                this.props.onGroupAdded({ "name": this.state.groupName, "private": !this.state.public });
+                this.props.onGroupAdded({ "name": this.state.groupName, "private": !this.state.readPublic });
             })
             .catch((ex) => {
                 console.error("GROUP INVITE ERROR: ", ex);
@@ -133,12 +134,20 @@ class GroupAdder extends Component {
                 }}
                 margin="normal"
             />
+            <FormLabel component="legend">Read</FormLabel>
             <FormControlLabel control={<Switch
-                    label="Public"
-                    checked={this.state.public}
-                    onChange={(evt) => {this.setState({ public: evt.target.checked})}}
-                    value={this.state.public}
-                />} label={(this.state.public)? "Public": "Private"} />
+                    label="Read"
+                    checked={this.state.readPublic}
+                    onChange={(evt) => {this.setState({ readPublic: evt.target.checked, writePublic: (!evt.target.checked)? false: this.state.writePublic })}}
+                    value={this.state.readPublic}
+                />} label={(this.state.readPublic)? "Public": "Private"} />
+            <FormLabel component="legend">Write</FormLabel>
+            <FormControlLabel control={<Switch
+                    label="Write"
+                    checked={this.state.writePublic}
+                    onChange={(evt) => {this.setState({ writePublic: evt.target.checked, readPublic: (evt.target.checked)? true: this.state.readPublic })}}
+                    value={this.state.writePublic}
+                />} label={(this.state.writePublic)? "Public": "Private"} />
             <hr />
             <UserChips users={this.state.users} 
                 onUserDeleted={(user, i) => {
@@ -158,6 +167,16 @@ class GroupAdder extends Component {
                         "users": newUsers
                     });
                 }}/>
+            {
+                (this.state.users.length > 0 && !this.state.readPublic)? (<div>
+                    <FormLabel component="legend">User Privileges</FormLabel>
+                    <FormControlLabel control={<Switch
+                        label="Allow Write"
+                        checked={this.state.writableInvites}
+                        onChange={(evt) => {this.setState({ writableInvites: evt.target.checked })}}
+                        value={this.state.writableInvites}
+                    />} label={(this.state.writableInvites)? "Full Access": "Read Only"} /></div>): <div />
+            }
         </div>);
     }
 };

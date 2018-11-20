@@ -4,9 +4,11 @@
 export const getGroups = `query GetGroups {
   getGroups {
     accepted
+    writable
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -14,6 +16,7 @@ export const getGroups = `query GetGroups {
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -28,9 +31,11 @@ export const getGroups = `query GetGroups {
 export const getGroup = `query GetGroup($groupName: String!) {
   getGroup(groupName: $groupName) {
     accepted
+    writable
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -38,6 +43,7 @@ export const getGroup = `query GetGroup($groupName: String!) {
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -72,6 +78,7 @@ export const getMessages = `query GetMessages($chatID: String!) {
         picKey
       }
       accepted
+      writable
     }
   }
 }
@@ -79,7 +86,8 @@ export const getMessages = `query GetMessages($chatID: String!) {
 export const searchGroups = `query SearchGroups($query: String!) {
   searchGroups(query: $query) {
     name
-    private
+    readPrivate
+    writePrivate
   }
 }
 `;

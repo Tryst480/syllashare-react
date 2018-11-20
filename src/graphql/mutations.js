@@ -1,10 +1,19 @@
 // eslint-disable
 // this is an auto generated file. This will be overwritten
 
-export const createGroup = `mutation CreateGroup($groupName: String!, $groupPrivate: Boolean!) {
-  createGroup(groupName: $groupName, groupPrivate: $groupPrivate) {
+export const createGroup = `mutation CreateGroup(
+  $groupName: String!
+  $readPrivate: Boolean!
+  $writePrivate: Boolean!
+) {
+  createGroup(
+    groupName: $groupName
+    readPrivate: $readPrivate
+    writePrivate: $writePrivate
+  ) {
     name
-    private
+    readPrivate
+    writePrivate
   }
 }
 `;
@@ -14,7 +23,8 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
     groupName
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -22,6 +32,7 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -37,17 +48,19 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
       lastName
       picKey
       accepted
+      writable
     }
   }
 }
 `;
-export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
-  leaveGroup(groupName: $groupName) {
+export const leaveGroup = `mutation LeaveGroup($groupName: String!, $kickUserID: String) {
+  leaveGroup(groupName: $groupName, kickUserID: $kickUserID) {
     userID
     groupName
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -55,6 +68,7 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -70,17 +84,27 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!) {
       lastName
       picKey
       accepted
+      writable
     }
   }
 }
 `;
-export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $inviteToUserID: String!) {
-  inviteToGroup(groupName: $groupName, inviteToUserID: $inviteToUserID) {
+export const inviteToGroup = `mutation InviteToGroup(
+  $groupName: String!
+  $inviteToUserID: String!
+  $write: Boolean!
+) {
+  inviteToGroup(
+    groupName: $groupName
+    inviteToUserID: $inviteToUserID
+    write: $write
+  ) {
     userID
     groupName
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -88,6 +112,7 @@ export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $invit
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -103,6 +128,7 @@ export const inviteToGroup = `mutation InviteToGroup($groupName: String!, $invit
       lastName
       picKey
       accepted
+      writable
     }
   }
 }
@@ -152,7 +178,23 @@ export const createMessage = `mutation CreateMessage(
       lastName
       picKey
       accepted
+      writable
     }
+  }
+}
+`;
+export const setWritable = `mutation SetWritable(
+  $groupName: String!
+  $setUserID: String!
+  $writable: Boolean!
+) {
+  setWritable(
+    groupName: $groupName
+    setUserID: $setUserID
+    writable: $writable
+  ) {
+    userID
+    writable
   }
 }
 `;

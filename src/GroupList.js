@@ -75,9 +75,9 @@ class GroupList extends Component {
                     }
                 }
                 if (groupEntry.accepted) {
-                    groups.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": numMembers })
+                    groups.push({ "name": group.name, "visibility": ((group.readPrivate)? "Private": "Public"), "members": numMembers })
                 } else if (this.props.mutable) {
-                    invites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": numMembers })
+                    invites.push({ "name": group.name, "visibility": ((group.readPrivate)? "Private": "Public"), "members": numMembers })
                 }
             }
             this.setState({ "groups": groups, "invites": invites });
@@ -171,7 +171,7 @@ class GroupList extends Component {
                         numMembers++;
                     }
                 }
-                newInvites.push({ "name": group.name, "visibility": ((group.private)? "Private": "Public"), "members": numMembers });
+                newInvites.push({ "name": group.name, "visibility": ((group.readPrivate)? "Private": "Public"), "members": numMembers });
                 this.setState({
                     invites: newInvites
                 });

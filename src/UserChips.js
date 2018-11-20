@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import update from 'react-addons-update';
 import Amplify, { Storage, Auth, Hub, API, graphqlOperation } from 'aws-amplify';
+import EditIcon from '@material-ui/icons/Edit';
 import { AwsExports } from './cloud/CloudExports';
 
 Amplify.configure(AwsExports);
@@ -89,9 +90,10 @@ class UserChips extends Component {
                 return(<Chip
                 avatar={ <Avatar style={{"height": this.props.size, "width": this.props.size, "font-size": (this.props.size * 0.55) }} src={(user.picSigned != null)? user.picSigned: this.state.picMap[user.id]} className={classNames(classes.blueAvatar, classes.bigAvatar)}>{user.username.substr(0, 1).toUpperCase()}</Avatar>}
                 label={user.username}
-                onDelete={ (this.props.onUserDeleted != null)? () => { this.props.onUserDeleted(user, i) }: null }
+                deleteIcon={this.props.onUserEdit != null ? <EditIcon /> : undefined}
+                onDelete={ (this.props.onUserDeleted != null || this.props.onUserEdit)? () => { (this.props.onUserDeleted != null)? this.props.onUserDeleted(user, i): this.props.onUserEdit(user, i) }: null }
                 className={classes.chip}
-                style={{"height": this.props.size, "font-size": (this.props.size * 0.55), "margin": (this.props.size / 4), "border-radius": (this.props.size/2)}}
+                style={{"background": user.color, "height": this.props.size, "font-size": (this.props.size * 0.55), "margin": (this.props.size / 4), "border-radius": (this.props.size/2)}}
                 />);
             })}
         </div>);

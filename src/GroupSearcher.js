@@ -45,8 +45,6 @@ class GroupSearcher extends React.Component {
             this.setState({ "searchSuggestions": groups });
         }).catch((err) => {
             console.error("GetGroup error:", err);
-            this.subscribeToMyInvites();
-            this.setState({ "loading": false, "invited": false });
         });
     }
   };

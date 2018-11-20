@@ -7,7 +7,8 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
     groupName
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -15,6 +16,7 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -30,6 +32,7 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
       lastName
       picKey
       accepted
+      writable
     }
   }
 }
@@ -40,7 +43,8 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
     groupName
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -48,6 +52,7 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -63,6 +68,7 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
       lastName
       picKey
       accepted
+      writable
     }
   }
 }
@@ -73,7 +79,8 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
     groupName
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -81,6 +88,7 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -96,6 +104,7 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
       lastName
       picKey
       accepted
+      writable
     }
   }
 }
@@ -106,7 +115,8 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
     groupName
     group {
       name
-      private
+      readPrivate
+      writePrivate
       users {
         id
         username
@@ -114,6 +124,7 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
         lastName
         picKey
         accepted
+        writable
       }
       chats {
         id
@@ -129,6 +140,7 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
       lastName
       picKey
       accepted
+      writable
     }
   }
 }
@@ -160,6 +172,7 @@ export const subCreateMessage = `subscription SubCreateMessage($chatID: String!)
       lastName
       picKey
       accepted
+      writable
     }
   }
 }

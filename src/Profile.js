@@ -528,7 +528,7 @@ class Profile extends React.Component {
           { (this.props.thisUser)? (<div>
               <Grid item xs={18}>
                 <Grow in={!this.state.editing}>
-                  <div className={(this.state.editing)? classes.gone: classes.visible}>
+                  <div style={{"textAlign": "center"}} className={(this.state.editing)? classes.gone: classes.visible}>
                     <Button variant="fab" color="primary" 
                       aria-label="Edit" className={classes.button}
                       onClick={() => {this.setState({editing: true})}}>
