@@ -17,6 +17,7 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import DoneIcon from '@material-ui/icons/Done';
 import Grow from '@material-ui/core/Grow';
 import Calendar from './Calendar';
+import uuidv4 from 'uuid/v4';
 
 import GroupList from './GroupList';
 import ClassList from './ClassList';
@@ -174,13 +175,21 @@ class Profile extends React.Component {
       console.error("GetUser Ex: ", err);
     });
     this.getUserData(this.props["syllaToken"]);
-    this.getUserEvents();
   }
 
   getUserEvents() {
     API.graphql(graphqlOperation(queries.getUserEvents, { "userID": this.props.userID })).then((data) => {
       console.log("RESULT: ", data);
-      this.setState({ "userEvents": data.data.getUserEvents });
+      var events = [];
+      for (var evt of data.data.getUserEvents) {
+        var time = parseInt(evt.time);
+        var start = new Date(time);
+        var end = new Date(time + evt.mins * 60 * 1000);
+        var localID = uuidv4();
+        events.push({ "title": evt.name, "start":start, "end": end, "priority": evt.priority, "localID": localID });
+      }
+      console.log("USER EVENTS", events);
+      this.setState({ "userEvents": events });
     }).catch((err) => {
         console.error("GetUserEvents error:", err);
     });
@@ -224,6 +233,7 @@ class Profile extends React.Component {
     }).catch((err) => {
       console.error("GetUser Ex: ", err);
     });
+    this.getUserEvents();
   }
 
   componentWillReceiveProps(nextProps) {
