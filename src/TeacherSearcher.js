@@ -63,8 +63,10 @@ class TeacherSearcher extends React.Component {
       placeholder: 'Teacher Name',
       value: this.state.searchValue,
       onChange: (event, { newValue }) => {
+        var newVal = typeof newValue !== 'undefined' ? newValue : '';
+        this.props.onChange(newVal);
         this.setState({
-            searchValue: typeof newValue !== 'undefined' ? newValue : '',
+            searchValue: newVal
         });
       }
     };
@@ -77,7 +79,9 @@ class TeacherSearcher extends React.Component {
             getSuggestionValue={(suggestion) => {return suggestion.name}}
             onSuggestionSelected={(event, args) => {
               event.stopPropagation();
-              this.props.onTeacherSelected(args.suggestion);
+              if (this.props.onTeacherSelected != null) {
+                this.props.onTeacherSelected(args.suggestion);
+              }
             }}
             renderSuggestion={(suggestion) => {
                 return (<div>

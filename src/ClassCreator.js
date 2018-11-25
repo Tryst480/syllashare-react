@@ -10,6 +10,12 @@ import Amplify, { Storage, Auth, Hub, API, graphqlOperation } from 'aws-amplify'
 import EditIcon from '@material-ui/icons/Edit';
 import { AwsExports } from './cloud/CloudExports';
 import TeacherSearcher from './TeacherSearcher';
+import * as queries from './graphql/queries';
+import * as mutations from './graphql/mutations';
+import * as subscriptions from './graphql/subscriptions';
+import { strict } from 'assert';
+import Calendar from './Calendar';
+import uuidv4 from 'uuid/v4';
 
 Amplify.configure(AwsExports);
 
@@ -56,9 +62,14 @@ class ClassCreator extends Component {
             "school": null,
             "schools": [],
             "terms": ["Fall", "Spring", "Summer"],
-            "year": (new Date()).getFullYear(),
+            "year": (new Date()).getFullYear().toString(),
             "weekdays": ["SU", "MO", "TU", "WE", "TH", "FR", "SA"],
-            "selectedWeekDays": []
+            "selectedWeekDays": [],
+            "startTime": "07:30",
+            "endTime": "08:45",
+            "termStart": null,
+            "termEnd": null,
+            "classEvents": []
         }
     }
 
@@ -82,6 +93,94 @@ class ClassCreator extends Component {
             });
         }).catch((err) => {
             console.error("GetSchools Ex: ", err);
+        });
+    }
+
+    getTerm() {
+        console.log("GETTING TERM!");
+        API.graphql(graphqlOperation(queries.getTerm, { "schoolName": this.state.school.name, "term": this.state.term, "year": this.state.year })).then((resp) => {
+            console.log("TERM DATA: ", resp);
+            var toTime = (str) => {
+                var slashIdx = str.indexOf('/');
+                var month = parseInt(str.substr(0, slashIdx));
+                var day = parseInt(str.substr(slashIdx + 1));
+                return new Date(parseInt(this.state.year), month - 1, day).getTime();
+            }
+            this.setState({
+                "termStart": toTime(resp.data.getTerm.start),
+                "termEnd": toTime(resp.data.getTerm.end)
+            });
+        }).catch((err) => {
+            console.error("GetTerm error:", err);
+        });
+    }
+
+    setClassEvents() {
+        console.log("Setting class events");
+        var toTime = (str) => {
+            var colonIdx = str.indexOf(":");
+            var hour = parseInt(str.substr(0, colonIdx));
+            var minute = parseInt(str.substr(colonIdx + 1));
+            return (hour * 60 + minute) * 60 * 1000;
+        };
+        var time = this.state.termStart + toTime(this.state.startTime);
+        var duration = toTime(this.state.endTime) - toTime(this.state.startTime);
+        var dayNums = [false, false, false, false, false, false, false];
+        for (var day of this.state.selectedWeekDays) {
+            dayNums[this.state.weekdays.indexOf(day)] = true;
+        }
+        console.log("DAYNUMS: ", dayNums);
+        var classEvents = [];
+        while (time < this.state.termEnd) {
+            var date = new Date(time);
+            var day = date.getDay();
+            if (dayNums[day]) {
+                classEvents.push({
+                    "title": "Class",
+                    "localID": uuidv4(),
+                    "start": date,
+                    "end": new Date(time + duration),
+                    "priority": 0
+                });
+            }
+            time += 24 * 60 * 60 * 1000;
+        }
+        console.log("Class Events: ", classEvents);
+        this.setState({
+            "classEvents": classEvents
+        });
+    }
+
+    onSave(events, cb) {
+        var results = [];
+        for (var evt of events) {
+            console.log("EVENT NAME: ", evt.title);
+            results.push({
+                "name": evt.title, 
+                "time": evt.start.getTime(), 
+                "mins": ((evt.end.getTime() - evt.start.getTime()) / (60 * 1000)), 
+                "priority": evt.priority});
+        }
+        var timeStr = "";
+        for (var t of this.state.selectedWeekDays) {
+            timeStr += t + " ";
+        }
+        timeStr += this.state.startTime + "-" + this.state.endTime;
+        console.log("Teacher name")
+        API.graphql(graphqlOperation(mutations.createClass, { 
+            "courseID": (this.props.courseID != null)? this.props.courseID: this.state.courseID, 
+            "schoolName": (this.props.schoolName != null)? this.props.schoolName: this.state.school.name, 
+            "term": this.state.term,
+            "year": parseInt(this.state.year),
+            "courseName": this.state.courseName,
+            "teacherName": this.state.teacherName,
+            "timeStr": timeStr
+        })).then((resp) => {
+            console.log("Create Class Resp: ", resp);
+            cb(resp.data.createClass.id, results);
+        })
+        .catch((e) => {
+            console.log("CreateClass Error", e);
         });
     }
 
@@ -141,6 +240,10 @@ class ClassCreator extends Component {
                                                     if (school.name == schoolName) {
                                                         this.setState({
                                                             school: school
+                                                        }, () => {
+                                                            if (this.state.year.length >= 4 && this.state.term != null) {
+                                                                this.getTerm();
+                                                            }
                                                         });
                                                         return;
                                                     }
@@ -181,6 +284,10 @@ class ClassCreator extends Component {
                                             onChange={(event) => {
                                                 this.setState({
                                                     "term": event.target.value
+                                                }, () => {
+                                                    if (this.state.year.length >= 4 && this.state.school != null) {
+                                                        this.getTerm();
+                                                    }
                                                 });
                                             }}
                                             inputProps={{
@@ -200,6 +307,10 @@ class ClassCreator extends Component {
                                         onChange={(e) => {
                                             this.setState({
                                                 "year": e.target.value
+                                            }, () => {
+                                                if (e.target.value.length >= 4 && this.state.school != null && this.state.term != null) {
+                                                    this.getTerm();
+                                                }
                                             });
                                         }}
                                         type="number"
@@ -210,10 +321,20 @@ class ClassCreator extends Component {
                                         margin="normal"
                                         />
                                     <br />
-                                    <TeacherSearcher />
+                                    <TeacherSearcher onChange={(val) => {this.setState({"teacherName": val})}} />
                                     <br />
                                     <div className={classes.toggleContainer}>
-                                        <ToggleButtonGroup value={this.state.selectedWeekDays} onChange={(event, alignment) => this.setState({ "selectedWeekDays": alignment })}>
+                                        <ToggleButtonGroup value={this.state.selectedWeekDays} onChange={(event, alignment) => { 
+                                            if (alignment == null) {
+                                                alignment = [];
+                                            }
+                                            this.setState({ "selectedWeekDays": alignment }, () => {
+                                                if (this.state.selectedWeekDays.length > 0 && this.state.startTime.length > 0 && this.state.endTime.length > 0) {
+                                                    this.setClassEvents();
+                                                }
+                                            });
+                                            console.log(alignment);
+                                        }}>
                                             {
                                                 this.state.weekdays.map((weekday) => {
                                                     return (<ToggleButton value={weekday}>{weekday}</ToggleButton>)
@@ -227,34 +348,49 @@ class ClassCreator extends Component {
                                                 id="time"
                                                 label="Class Start Time"
                                                 type="time"
-                                                defaultValue="07:30"
+                                                value={this.state.startTime}
                                                 className={classes.textField}
                                                 InputLabelProps={{
                                                     shrink: true
                                                 }}
                                                 inputProps={{
                                                     step: 300,
+                                                }}
+                                                onChange={(e) => {
+                                                    this.setState({
+                                                        "startTime": e.target.value
+                                                    });
                                                 }} />
                                         </Grid>
                                         <Grid key={"1"} item className={classes.root} >
                                             <TextField
-                                            id="time"
-                                            label="Class End Time"
-                                            type="time"
-                                            defaultValue="08:45"
-                                            className={classes.textField}
-                                            InputLabelProps={{
-                                                shrink: true,
-                                                float: "left"
-                                            }}
-                                            inputProps={{
-                                                step: 300,
-                                            }} />
+                                                id="time"
+                                                label="Class End Time"
+                                                type="time"
+                                                defaultValue="08:45"
+                                                className={classes.textField}
+                                                InputLabelProps={{
+                                                    shrink: true,
+                                                    float: "left"
+                                                }}
+                                                inputProps={{
+                                                    step: 300,
+                                                }}
+                                                value={this.state.endTime}
+                                                onChange={(e) => {
+                                                    this.setState({
+                                                        "endTime": e.target.value
+                                                    });
+                                                }} />
                                         </Grid>
                                     </Grid>
                                 </Paper>
-                            </Grid>   
+                            </Grid>
                         </Grid>
+                        {
+                            (this.state.termStart != null)? <Calendar canSave={(this.props.courseID != null || 
+                                (this.state.courseID.length > 0 && this.state.courseName.length > 0 && this.state.school != null)) && this.state.selectedWeekDays.length > 0 && this.state.startTime.length > 0 && this.state.endTime.length > 0 } mutable={true} startTime={this.state.termStart} events={this.state.classEvents} onSave={this.onSave.bind(this)} />: <div />
+                        }
                     </div>): <div />
             }
 

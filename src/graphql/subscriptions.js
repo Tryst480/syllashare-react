@@ -29,7 +29,9 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
     user {
@@ -72,7 +74,9 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
     user {
@@ -115,7 +119,9 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
     user {
@@ -158,7 +164,9 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
     user {

@@ -29,7 +29,9 @@ export const getGroups = `query GetGroups {
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
   }
@@ -63,7 +65,9 @@ export const getGroup = `query GetGroup($groupName: String!) {
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
   }
@@ -172,7 +176,9 @@ export const getUserEvents = `query GetUserEvents($userID: String!) {
     name
     time
     mins
+    priority
     groupName
+    classID
   }
 }
 `;
@@ -185,6 +191,13 @@ export const searchTeachers = `query SearchTeachers($query: String!) {
       state
       picKey
     }
+  }
+}
+`;
+export const getTerm = `query GetTerm($schoolName: String!, $year: String!, $term: String!) {
+  getTerm(schoolName: $schoolName, year: $year, term: $term) {
+    start
+    end
   }
 }
 `;

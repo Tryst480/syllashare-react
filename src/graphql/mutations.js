@@ -45,7 +45,9 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
     user {
@@ -88,7 +90,9 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!, $kickUserID:
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
     user {
@@ -139,7 +143,9 @@ export const inviteToGroup = `mutation InviteToGroup(
         name
         time
         mins
+        priority
         groupName
+        classID
       }
     }
     user {
@@ -258,7 +264,9 @@ export const updateEvents = `mutation UpdateEvents($groupName: String!, $events:
       name
       time
       mins
+      priority
       groupName
+      classID
     }
     groupName
   }
@@ -271,7 +279,9 @@ export const deleteEvents = `mutation DeleteEvents($groupName: String!, $eventID
       name
       time
       mins
+      priority
       groupName
+      classID
     }
     groupName
   }
