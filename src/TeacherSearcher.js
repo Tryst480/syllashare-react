@@ -31,7 +31,7 @@ const styles = theme => ({
     },
   }
 });
-class GroupSearcher extends React.Component {
+class TeacherSearcher extends React.Component {
   state = {
     searchValue: '',
     searchSuggestions: []
@@ -40,11 +40,11 @@ class GroupSearcher extends React.Component {
   // You already implemented this logic above, so just use it.
   onSuggestionsFetchRequested = ({ value }) => {
     if (value.length > 0) {
-        API.graphql(graphqlOperation(queries.searchGroups, { "query": value })).then((resp) => {
-            var groups = resp.data.searchGroups;
-            this.setState({ "searchSuggestions": groups });
+        API.graphql(graphqlOperation(queries.searchTeachers, { "query": value })).then((resp) => {
+            var teachers = resp.data.searchTeachers;
+            this.setState({ "searchSuggestions": teachers });
         }).catch((err) => {
-            console.error("GetGroup error:", err);
+            console.error("SearchTeachers error:", err);
         });
     }
   };
@@ -60,7 +60,7 @@ class GroupSearcher extends React.Component {
 
      // Autosuggest will pass through all these props to the input.
     const inputProps = {
-      placeholder: 'Search Groups',
+      placeholder: 'Teacher Name',
       value: this.state.searchValue,
       onChange: (event, { newValue }) => {
         this.setState({
@@ -70,15 +70,14 @@ class GroupSearcher extends React.Component {
     };
      return (
         <div className={classes.search}>
-
           <Autosuggest
             suggestions={this.state.searchSuggestions}
             onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
             onSuggestionsClearRequested={this.onSuggestionsClearRequested}
-            getSuggestionValue={(suggestion) => {return suggestion.username}}
+            getSuggestionValue={(suggestion) => {return suggestion.name}}
             onSuggestionSelected={(event, args) => {
               event.stopPropagation();
-              this.props.onGroupSelected(args.suggestion);
+              this.props.onTeacherSelected(args.suggestion);
             }}
             renderSuggestion={(suggestion) => {
                 return (<div>
@@ -91,7 +90,7 @@ class GroupSearcher extends React.Component {
     );
   }
 }
-GroupSearcher.propTypes = {
+TeacherSearcher.propTypes = {
   classes: PropTypes.object.isRequired,
 };
-export default withStyles(styles)(GroupSearcher); 
+export default withStyles(styles)(TeacherSearcher); 

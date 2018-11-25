@@ -25,6 +25,7 @@ import Popper from '@material-ui/core/Popper';
 import CheckIcon from '@material-ui/icons/Check';
 import CloseIcon from '@material-ui/icons/Close';
 import UserSearcher from './UserSearcher';
+import ClassSearcher from './ClassSearcher';
 import Amplify, { API, graphqlOperation } from "aws-amplify";
 import { AwsExports } from './cloud/CloudExports';
 import * as queries from './graphql/queries';
@@ -309,6 +310,8 @@ class TopBar extends React.Component {
       searchBar = <UserSearcher excludedUsers={[this.props.userID]} onUserSelected={(user) => {this.props.onUserSelected(user.id)}} />
     } else if (this.state.searchMode == "groups") {
       searchBar = <GroupSearcher onGroupSelected={(group) => {this.props.onGroupSelected(group.name)}} />
+    } else {
+      searchBar = <ClassSearcher onClassCreate={this.props.onClassCreate} onClassSelected={(c) => {this.props.onClassSelected(c.id)}} />
     }
 
     return (

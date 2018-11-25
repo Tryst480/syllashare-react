@@ -183,7 +183,7 @@ class Chat extends Component {
                     msgTextStyle["background"] = "#89CFF0";
                 } else {
                     msgStyle = { "margin-right" : "auto", "margin-left": 0, "textAlign": "left" };
-                    msgTextStyle["background"] = "#FF6666";
+                    msgTextStyle["background"] = "#ffa64d";
                 }
                 if (msgCollection.length > 1) {
                     if (i == 0) {

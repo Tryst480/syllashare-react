@@ -20,7 +20,7 @@ import Calendar from './Calendar';
 
 import GroupList from './GroupList';
 import ClassList from './ClassList';
-import Amplify, { Storage, Auth, Hub, API } from 'aws-amplify';
+import Amplify, { Storage, Auth, Hub, API, graphqlOperation } from 'aws-amplify';
 import BackendExports from './BackendExports';
 import CloseIcon from '@material-ui/icons/Close';
 import { AwsExports, GcpExports } from './cloud/CloudExports';
@@ -28,6 +28,9 @@ import GoogleLogin from 'react-google-login';
 import Dropzone from 'react-dropzone';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
+import * as queries from './graphql/queries';
+import * as mutations from './graphql/mutations';
+import * as subscriptions from './graphql/subscriptions';
 
 Amplify.configure(AwsExports);
 
@@ -69,9 +72,6 @@ const styles = theme => ({
     marginTop: theme.spacing.unit * 3,
     overflowX: 'auto',
   },
-  table: {
-    minWidth: 700,
-  },
   calButton: {
     "text-align": "center",
     justifyContent: 'center'
@@ -103,7 +103,6 @@ const styles = theme => ({
    },
    googleLogin: {
     background: 'white',
-    width: '85%',
     'margin-top': '10px',
     'vertical-align': 'middle',
     'border-width': '0px'
@@ -147,7 +146,8 @@ class Profile extends React.Component {
       profileImgFile: null,
       profileImgUploading: false,
       picUrl: null,
-      schoolPicUrl: null
+      schoolPicUrl: null,
+      userEvents: []
     };
   }
 
@@ -174,6 +174,16 @@ class Profile extends React.Component {
       console.error("GetUser Ex: ", err);
     });
     this.getUserData(this.props["syllaToken"]);
+    this.getUserEvents();
+  }
+
+  getUserEvents() {
+    API.graphql(graphqlOperation(queries.getUserEvents, { "userID": this.props.userID })).then((data) => {
+      console.log("RESULT: ", data);
+      this.setState({ "userEvents": data.data.getUserEvents });
+    }).catch((err) => {
+        console.error("GetUserEvents error:", err);
+    });
   }
 
   getUserData(syllaToken) {
@@ -425,10 +435,11 @@ class Profile extends React.Component {
                 var schoolName = event.target.value;
                 for (var school of this.state.schools) {
                   if (school.name == schoolName) {
+                    var newFields = this.state.fields;
+                    newFields["school"] = school;
+                    console.log("NEW FIELDS: ", newFields);
                     this.setState({
-                      fields: {
-                        school: school
-                      }
+                      fields: newFields
                     });
                     Storage.get(school.picKey.substr(7), { level: 'public' })
                     .then(picResult => this.setState({ "schoolPicUrl": picResult }))
@@ -436,10 +447,10 @@ class Profile extends React.Component {
                     return;
                   }
                 }
+                var newFields = this.state.fields;
+                newFields["school"] = null;
                 this.setState({
-                  fields: {
-                    school: null
-                  },
+                  fields: newFields,
                   schoolPicUrl: null
                 });
               }}
@@ -561,35 +572,33 @@ class Profile extends React.Component {
           }
           {
             (this.props.thisUser)? (
-            <Grid item xs={18}>
+            <Grid item xs={3}>
               <Paper className={classes.root}>
-                <Table className={classes.table}>
+                <Table>
                   <TableHead>
                       <TableRow>
                         <TableCell className={classes.calButton}>Google Calendar</TableCell>
-                        <TableCell className={classes.calButton}>Microsoft Calendar</TableCell>
-                        <TableCell className={classes.calButton}>iPhone Calendar</TableCell>
                       </TableRow>
                       <TableRow>
-                        { (this.state.user.providers.indexOf("google") < 0)
-                          ? <GoogleLogin
-                              className={classes.googleLogin}
-                              clientId={GcpExports.clientID}
-                              responseType="code"
-                              accessType="offline"
-                              scope="profile email"
-                              uxMode="redirect"
-                              redirect_uri="postmessage"
-                              onSuccess={this.onGoogleSignIn.bind(this)}
-                              onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
-                              <Button variant="contained" color="primary">
-                                  Link
-                              </Button>
-                            </GoogleLogin>
-                          : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
-                        }
-                        <TableCell className={classes.calButton}><Button  variant="contained" color="primary">Link</Button></TableCell>
-                        <TableCell className={classes.calButton}><Button variant="contained" color="primary">Link</Button></TableCell>
+                        <div style={{"textAlign": "center"}}>
+                          { (this.state.user.providers.indexOf("google") < 0)
+                            ? <GoogleLogin
+                                className={classes.googleLogin}
+                                clientId={GcpExports.clientID}
+                                responseType="code"
+                                accessType="offline"
+                                scope="profile email"
+                                uxMode="redirect"
+                                redirect_uri="postmessage"
+                                onSuccess={this.onGoogleSignIn.bind(this)}
+                                onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
+                                <Button variant="contained" color="primary">
+                                    Link
+                                </Button>
+                              </GoogleLogin>
+                            : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
+                          }
+                        </div>
                       </TableRow>
                   </TableHead>
                 </Table>
@@ -600,7 +609,7 @@ class Profile extends React.Component {
             <Grid container spacing={24}>
               <Grid item xm={8}>
                 <h1>Classes</h1>
-                <ClassList />
+                <ClassList userID={this.props.userID} onClassSelected={this.props.onClassSelected} onClassCreate={this.props.onClassCreate} />
               </Grid>
               <Grid item xm={8}>
                 <h1>Groups</h1>
@@ -610,7 +619,7 @@ class Profile extends React.Component {
           </Grid>
         </Grid>
         <Paper className={classes.root}>
-          <Calendar />
+          <Calendar mutable={false} events={this.state.userEvents} />
         </Paper>
       </div>
     );
