@@ -389,7 +389,12 @@ class ClassCreator extends Component {
                         </Grid>
                         {
                             (this.state.termStart != null)? <Calendar canSave={(this.props.courseID != null || 
-                                (this.state.courseID.length > 0 && this.state.courseName.length > 0 && this.state.school != null)) && this.state.selectedWeekDays.length > 0 && this.state.startTime.length > 0 && this.state.endTime.length > 0 } mutable={true} startTime={this.state.termStart} events={this.state.classEvents} onSave={this.onSave.bind(this)} />: <div />
+                                (this.state.courseID.length > 0 && this.state.courseName.length > 0 && this.state.school != null)) 
+                                && this.state.selectedWeekDays.length > 0 && this.state.startTime.length > 0 && this.state.endTime.length > 0 } 
+                                mutable={true} startTime={this.state.termStart} 
+                                events={this.state.classEvents} 
+                                onSave={this.onSave.bind(this)}
+                                onSaveComplete={(classID) => {this.props.onClassSelected(classID)}} />: <div />
                         }
                     </div>): <div />
             }

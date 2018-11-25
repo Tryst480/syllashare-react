@@ -435,9 +435,11 @@ class Group extends Component {
                     </Button>
                 </Grid>
                 <Grid key={"1"} item>
-                    <Typography component="h2" variant="h1" gutterBottom>
-                        {this.props.groupName}
-                    </Typography>
+                    { (this.props.children == null)? (
+                        <Typography component="h2" variant="h1" gutterBottom>
+                            {this.props.groupName}
+                        </Typography>): this.props.children
+                    }
                 </Grid>
                 <Grid key={"2"} item className={classes.root} >
                     <Button onClick={this.declineInvite.bind(this)} variant="extendedFab" aria-label="Invite" className={classes.button}>
@@ -452,9 +454,11 @@ class Group extends Component {
                     
                 </Grid>
                 <Grid key={"1"} style={{"textAlign": "center", "marginBottom": 0}} item>
-                    <Typography component="h2" variant="h1" gutterBottom>
-                        {this.props.groupName}
-                    </Typography>
+                    { (this.props.children == null)? (
+                        <Typography component="h2" variant="h1" gutterBottom>
+                            {this.props.groupName}
+                        </Typography>): this.props.children
+                    }
                     <Button onClick={this.acceptInvite.bind(this)} variant="extendedFab" aria-label="Invite" className={classes.button} style={{"marginTop": 0}}>
                         <AddIcon className={classes.extendedIcon} />
                         Join
@@ -524,7 +528,7 @@ class Group extends Component {
                 </div>
             </Modal>
             <Parallax
-                bgImage={(this.state.schoolPicUrl == null)? require('./imgs/background.jpg'): this.state.schoolPicUrl}
+                bgImage={(this.props.backgroundUrl == null)? require('./imgs/background.jpg'): this.props.backgroundUrl}
                 bgImageAlt="School"
                 strength={300}>
                 <br />

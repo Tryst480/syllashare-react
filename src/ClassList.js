@@ -60,9 +60,9 @@ class ClassList extends Component {
                         <TableBody>
                         {this.state.classes.map(c => {
                             return (
-                            <TableRow key={c.id} onClick={this.props.onClassSelected}>
+                            <TableRow key={c.id} onClick={() => {console.log("CS:", c.id); this.props.onClassSelected(c.id)}}>
                                 <TableCell component="th" scope="row">
-                                    {c.name}
+                                    {c.course.name}
                                 </TableCell>
                                 <TableCell>{c.teacher.name}</TableCell>
                                 <TableCell>{c.timeStr}</TableCell>

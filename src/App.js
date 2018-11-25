@@ -7,6 +7,7 @@ import TopBar from './TopBar';
 import Group from './Group';
 import Chat from './Chat';
 import ClassCreator from './ClassCreator';
+import ClassGroup from './ClassGroup';
 
 const styles = theme => ({
     root: {
@@ -38,7 +39,8 @@ class App extends Component {
             chats: [],
             selectedUserID: null,
             creatingClass: false,
-            course: null
+            course: null,
+            classID: null
         };
     }
 
@@ -62,7 +64,17 @@ class App extends Component {
     }
 
     onClassSelected(classID) {
-
+        console.log("CLASS SELECTED:", classID);
+        window.history.pushState('page2', 'Title', '/' + classID);
+        var listener = window.addEventListener('popstate', (event) => {
+            this.setState({
+                "classID": null
+            });
+            window.removeEventListener('popstate', listener);
+        });
+        this.setState({
+            "classID": classID
+        })
     }
 
     onUserSelected(userID) {
@@ -112,7 +124,7 @@ class App extends Component {
             </div>);
         }
         var body = null;
-        if (this.state.groupName == null && this.state.selectedUserID == null && !this.state.creatingClass) {
+        if (this.state.groupName == null && this.state.selectedUserID == null && !this.state.creatingClass && this.state.classID == null) {
             body = (<div>
                 <TopBar 
                     syllaToken={this.state.syllaToken} 
@@ -128,6 +140,28 @@ class App extends Component {
                 }} />
                 {authElms}
             </div>);
+        } else if (this.state.classID != null) {
+            body = (<div>
+                <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} 
+                    onTitleClicked={() => {window.history.back()}} 
+                    onUserSelected={this.onUserSelected.bind(this)}
+                    onGroupSelected={this.onGroupSelected.bind(this)}
+                    onClassCreate={this.onClassCreate.bind(this)}
+                    onClassSelected={this.onClassSelected.bind(this)} />
+                <div style={{ height: '63px' }} />
+                <ClassGroup classID={this.state.classID} 
+                    userID={this.state.userID}
+                    onChatOpen={(chatInfo) => {
+                        var newChats = this.state.chats;
+                        newChats.push(chatInfo);
+                        this.setState({
+                            chats: newChats
+                        });
+                    }}
+                    onUserSelected={this.onUserSelected.bind(this)}
+                    onLeave={() => {this.setState({ "groupName": null })}}
+                    key={this.state.groupName} />
+            </div>)
         } else if (this.state.groupName != null) {
             body = (<div>
                 <TopBar syllaToken={this.state.syllaToken} userID={this.state.userID} 
@@ -172,7 +206,7 @@ class App extends Component {
                     onClassCreate={this.onClassCreate.bind(this)}
                     onClassSelected={this.onClassSelected.bind(this)} />
                 <div style={{ height: '63px' }} />
-                    <ClassCreator course={this.state.course} />
+                    <ClassCreator course={this.state.course} onClassSelected={this.onClassSelected.bind(this)} />
                 </div>);
         }
         return (<div>

@@ -209,7 +209,10 @@ class Calendar extends Component {
                 "groupName": groupName,
                 "events": events
             })).then((resp) => {
-                console.log("Events saved!")
+                console.log("Events saved!");
+                if (this.props.onSaveComplete != null) {
+                    this.props.onSaveComplete(groupName);
+                }
             })
             .catch((e) => {
                 console.log("UpdateEvents Error", e);
