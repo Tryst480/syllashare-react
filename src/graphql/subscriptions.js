@@ -24,6 +24,13 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
         subject
         groupName
       }
+      events {
+        id
+        name
+        time
+        mins
+        groupName
+      }
     }
     user {
       id
@@ -58,6 +65,13 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
         id
         name
         subject
+        groupName
+      }
+      events {
+        id
+        name
+        time
+        mins
         groupName
       }
     }
@@ -96,6 +110,13 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
         subject
         groupName
       }
+      events {
+        id
+        name
+        time
+        mins
+        groupName
+      }
     }
     user {
       id
@@ -130,6 +151,13 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
         id
         name
         subject
+        groupName
+      }
+      events {
+        id
+        name
+        time
+        mins
         groupName
       }
     }

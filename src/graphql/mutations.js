@@ -40,6 +40,13 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
         subject
         groupName
       }
+      events {
+        id
+        name
+        time
+        mins
+        groupName
+      }
     }
     user {
       id
@@ -74,6 +81,13 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!, $kickUserID:
         id
         name
         subject
+        groupName
+      }
+      events {
+        id
+        name
+        time
+        mins
         groupName
       }
     }
@@ -118,6 +132,13 @@ export const inviteToGroup = `mutation InviteToGroup(
         id
         name
         subject
+        groupName
+      }
+      events {
+        id
+        name
+        time
+        mins
         groupName
       }
     }
@@ -195,6 +216,64 @@ export const setWritable = `mutation SetWritable(
   ) {
     userID
     writable
+  }
+}
+`;
+export const createClass = `mutation CreateClass(
+  $courseID: String!
+  $schoolName: String!
+  $term: String!
+  $year: Int!
+  $courseName: String
+  $teacherName: String
+  $timeStr: String
+) {
+  createClass(
+    courseID: $courseID
+    schoolName: $schoolName
+    term: $term
+    year: $year
+    courseName: $courseName
+    teacherName: $teacherName
+    timeStr: $timeStr
+  ) {
+    id
+    course {
+      id
+      name
+    }
+    teacher {
+      name
+    }
+    term
+    year
+    timeStr
+  }
+}
+`;
+export const updateEvents = `mutation UpdateEvents($groupName: String!, $events: [EventInput]) {
+  updateEvents(groupName: $groupName, events: $events) {
+    events {
+      id
+      name
+      time
+      mins
+      groupName
+    }
+    groupName
+  }
+}
+`;
+export const deleteEvents = `mutation DeleteEvents($groupName: String!, $eventIDs: [String]) {
+  deleteEvents(groupName: $groupName, eventIDs: $eventIDs) {
+    events {
+      id
+      name
+      time
+      mins
+      groupName
+    }
+    groupName
   }
 }
 `;

@@ -5,6 +5,7 @@
   "dependencies": {
     "@material-ui/core": "^3.5.1",
     "@material-ui/icons": "^3.0.1",
+    "@material-ui/lab": "^3.0.0-alpha.23",
     "autosuggest-highlight": "^3.1.1",
     "aws-amplify": "^1.1.10",
     "aws-amplify-react": "^2.1.4",
@@ -24,7 +25,9 @@
     "react-dropzone-styled": "^0.1.0",
     "react-google-login": "^3.2.1",
     "react-parallax": "^2.0.1",
-    "react-scripts": "1.1.5"
+    "react-scripts": "1.1.5",
+    "react-weekday-picker": "^1.0.8",
+    "uuid": "^3.3.2"
   },
   "scripts": {
     "start": "react-scripts start",
