@@ -102,7 +102,7 @@ class ChatCreator extends Component {
                 ]}
                     />
             <Typography variant="h3" gutterBottom>
-                Create Chat for {this.props.groupName}
+                Create Chat
             </Typography>
             <TextField InputLabelProps={{ shrink: true }}
                 label="Chat Name"

@@ -220,7 +220,8 @@ class App extends Component {
                     height: 500,
                     background: "#FFFFFF",
                     "box-shadow": "rgba(0,0,0,0.2) 0px 2px 3px, inset rgba(0,0,0,0.2) 0px -1px 2px",
-                    "border-radius": 20
+                    "border-radius": 20,
+                    "zIndex": 1000000
                     }}>
                     {
                         <Chat userID={this.state.userID} chatID={this.state.chats[0].id} chatName={this.state.chats[0].name} 
