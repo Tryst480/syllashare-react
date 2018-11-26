@@ -14,6 +14,7 @@ import * as queries from './graphql/queries';
 import * as mutations from './graphql/mutations';
 import * as subscriptions from './graphql/subscriptions';
 import { strict } from 'assert';
+import Dropzone from 'react-dropzone';
 import Calendar from './Calendar';
 import uuidv4 from 'uuid/v4';
 
@@ -133,15 +134,39 @@ class ClassCreator extends Component {
         var classEvents = [];
         while (time < this.state.termEnd) {
             var date = new Date(time);
+            var scanEventFound = false;
             var day = date.getDay();
             if (dayNums[day]) {
-                classEvents.push({
-                    "title": "Class",
-                    "localID": uuidv4(),
-                    "start": date,
-                    "end": new Date(time + duration),
-                    "priority": 0
-                });
+                if (this.state.scanEvents != null) {
+                    var monthStr = (date.getMonth() + 1).toString();
+                    monthStr = (monthStr.length == 1)? "0" + monthStr: monthStr;
+                    var dStr = date.getDate().toString();
+                    dStr = (dStr.length == 1)? "0" + dStr: dStr;
+                    var dateStr = monthStr + '/' + dStr + '/' + date.getFullYear();
+                    console.log("DATESTR:", dateStr);
+                    for (var scanEvent of this.state.scanEvents) {
+                        if (scanEvent.date == dateStr) {
+                            classEvents.push({
+                                "title": scanEvent.event_title,
+                                "localID": uuidv4(),
+                                "start": date,
+                                "end": new Date(time + duration),
+                                "priority": 0
+                            });
+                            scanEventFound = true;
+                            break;
+                        }
+                    }
+                }
+                if (!scanEventFound) {
+                    classEvents.push({
+                        "title": "Class",
+                        "localID": uuidv4(),
+                        "start": date,
+                        "end": new Date(time + duration),
+                        "priority": 0
+                    });
+                }
             }
             time += 24 * 60 * 60 * 1000;
         }
@@ -184,6 +209,43 @@ class ClassCreator extends Component {
         });
     }
 
+    onDrop(acceptedFiles) {
+        var pdfID = uuidv4();
+        if (acceptedFiles.length == 0) {
+            return;
+        }
+        console.log("ACCEPTED FILE: ", acceptedFiles);
+        Storage.put(pdfID, acceptedFiles[0], { level: 'public' })
+            .then(picResult => { 
+                var objKey = 'public/' + pdfID;
+                fetch(BackendExports.Url + '/api/classscan', 
+                {
+                    method: 'POST',
+                    headers: new Headers({
+                        "authorization": this.props.syllaToken
+                    }),
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        'objKey': objKey
+                    })
+                })
+                .then((response) => {
+                    return response.json();
+                })
+                .then((response) => {
+                    console.log("ScanResult:", response);
+                    this.setState({
+                        "courseID": response.class_number,
+                        "courseName": response.class_title,
+                        "scanEvents": response.events
+                    })
+                })
+            })
+            .catch(err => { 
+                console.error("GET PIC ERR: " + err);
+            });
+    }
+
     render() {
         const { classes } = this.props;
         return (<div>
@@ -193,6 +255,13 @@ class ClassCreator extends Component {
                         <Typography variant="h3" gutterBottom>
                             Create Class
                         </Typography>
+                        { (this.state.scanEvents == null)? (
+                            <Dropzone
+                                style={{"width" : "100%", "height" : "200px", "border" : "1px solid black", "textAlign": "center"}}
+                                onDrop={this.onDrop.bind(this)}>
+                                <p>Drag and Drop Syllabus<br/> (or click to manually select)</p>
+                            </Dropzone>): <div />
+                        }
                         <Grid
                             container
                             spacing={0}

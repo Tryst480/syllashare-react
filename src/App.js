@@ -206,7 +206,10 @@ class App extends Component {
                     onClassCreate={this.onClassCreate.bind(this)}
                     onClassSelected={this.onClassSelected.bind(this)} />
                 <div style={{ height: '63px' }} />
-                    <ClassCreator course={this.state.course} onClassSelected={this.onClassSelected.bind(this)} />
+                    <ClassCreator 
+                        course={this.state.course} 
+                        onClassSelected={this.onClassSelected.bind(this)}
+                        syllaToken={this.state.syllaToken} />
                 </div>);
         }
         return (<div>

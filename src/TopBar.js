@@ -311,7 +311,7 @@ class TopBar extends React.Component {
     } else if (this.state.searchMode == "groups") {
       searchBar = <GroupSearcher onGroupSelected={(group) => {this.props.onGroupSelected(group.name)}} />
     } else {
-      searchBar = <ClassSearcher onClassCreate={this.props.onClassCreate} onClassSelected={(c) => {this.props.onClassSelected(c.id)}} />
+      searchBar = <ClassSearcher onClassCreate={this.props.onClassCreate} onClassSelected={this.props.onClassSelected} />
     }
 
     return (

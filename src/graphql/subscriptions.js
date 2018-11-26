@@ -213,3 +213,33 @@ export const subCreateMessage = `subscription SubCreateMessage($chatID: String!)
   }
 }
 `;
+export const subEventsUpdated = `subscription SubEventsUpdated($groupName: String!) {
+  subEventsUpdated(groupName: $groupName) {
+    events {
+      id
+      name
+      time
+      mins
+      priority
+      groupName
+      classID
+    }
+    groupName
+  }
+}
+`;
+export const subEventsDeleted = `subscription SubEventsDeleted($groupName: String!) {
+  subEventsDeleted(groupName: $groupName) {
+    events {
+      id
+      name
+      time
+      mins
+      priority
+      groupName
+      classID
+    }
+    groupName
+  }
+}
+`;

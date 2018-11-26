@@ -72,6 +72,7 @@ class Calendar extends Component {
         super(...args);
         this.state = {
             events: [],
+            savedEvents: [],
             updatedEvents: [],
             deletedEventIDs: [],
             show: false,
@@ -93,6 +94,8 @@ class Calendar extends Component {
         }
         if (this.props.groupName != null) {
             this.getGroupEvents(this.props.groupName);
+            this.subscribeToEventUpdates(this.props.groupName);
+            this.subscribeToEventDeletion(this.props.groupName);
         }
     }
 
@@ -103,6 +106,83 @@ class Calendar extends Component {
                 "events": nextProps.events
             });
         }
+    }
+
+    subscribeToEventUpdates = (groupName) => {
+        if (this.eventUpdateSubscription != null) {
+            this.eventUpdateSubscription.unsubscribe();
+            this.eventUpdateSubscription = null;
+        }
+
+        this.eventUpdateSubscription = API.graphql(graphqlOperation(subscriptions.subEventsUpdated, { "groupName": groupName })).subscribe({
+            next: (data) => {
+                console.log("EVT UPDATE SUBSCRIPTION: ", data);
+                var events = data.value.data.subEventsUpdated["events"];
+                var localEvents = this.state.events;
+                console.log("Events: ", localEvents);
+                var i = 0;
+                while (i < events.length) {
+                    var evt = events[i];
+                    var found = false;
+                    console.log("ITER EVENT");
+                    var j = 0;
+                    var startTime = new Date(parseInt(evt.time));
+                    var endTime = new Date(parseInt(evt.time) + evt.mins * 60 * 1000);
+                    while (j < localEvents.length) {
+                        var existingEvt = localEvents[j];
+                        if (existingEvt.globalID == evt.id) {
+                            console.log("EVENT MATCHED");
+                            existingEvt.title = evt.name;
+                            existingEvt.start = startTime;
+                            existingEvt.end = endTime;
+                            existingEvt.priority = evt.priority;
+                            found = true;
+                            break;
+                        }
+                        j++;
+                    }
+                    if (!found) {
+                        console.log("PUSHED");
+                        localEvents.push({ "globalID": evt.id, "localID": uuidv4(), "title": evt.name, "startTime": startTime, "end": endTime, "priority": evt.priority })
+                    }
+                    i++;
+                }
+                console.log("NEW EVENTS: ", localEvents);
+                this.setState({
+                    "events": localEvents,
+                    "savedEvents": localEvents
+                })
+            },
+            error: (error) => {
+                console.log("SUBInviteERR", JSON.stringify(error));
+            }
+        });
+    }
+
+    subscribeToEventDeletion = (groupName) => {
+        if (this.eventDeleteSubscription != null) {
+            this.eventDeleteSubscription.unsubscribe();
+            this.eventDeleteSubscription = null;
+        }
+
+        this.eventDeleteSubscription = API.graphql(graphqlOperation(subscriptions.subEventsDeleted, { "groupName": groupName })).subscribe({
+            next: (data) => {
+                var events = data.value.data.subEventsDeleted["events"];
+                var newEvents = [];
+                for (var evt of events) {
+                    var startTime = new Date(parseInt(evt.time));
+                    var endTime = new Date(parseInt(evt.time) + evt.mins * 60 * 1000);
+                    newEvents.push({ "title": evt.name, "localID": uuidv4(), "globalID": evt.id, "start": startTime, "end": endTime, "priority": evt.priority });
+                }
+                this.setState({
+                    "events": newEvents,
+                    "savedEvents": newEvents
+                });
+            },
+            error: (error) => {
+                console.log("SUBInviteERR", JSON.stringify(error));
+            }
+        });
     }
 
     getGroupEvents(groupName) {
@@ -123,6 +203,7 @@ class Calendar extends Component {
         .catch((e) => {
             console.log("GetGroupEvents Error", e);
         });
+        
     }
 
     hideModal = () => {

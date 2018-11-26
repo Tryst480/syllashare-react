@@ -24,7 +24,7 @@ const styles = theme => ({
     },
     progress: {
         margin: theme.spacing.unit * 2,
-    }
+    },
 });
 
 class CourseClasses extends Component {
@@ -60,7 +60,7 @@ class CourseClasses extends Component {
                     <TableBody>
                     {this.state.classes.map(c => {
                         return (
-                        <TableRow key={c.id}>
+                        <TableRow key={c.id} onClick={() => {console.log("CLASSID: ", c.id); this.props.onClassSelected(c.id);}}>
                             <TableCell component="th" scope="row">
                                 {c.teacher.name}
                             </TableCell>

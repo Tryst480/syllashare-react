@@ -30,7 +30,14 @@ const styles = theme => ({
       marginLeft: theme.spacing.unit * 3,
       width: 'auto',
     },
-  }
+  },
+  modalPaper: {
+    position: 'absolute',
+    width: theme.spacing.unit * 100,
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing.unit * 4,
+    },
 });
 
 
@@ -91,11 +98,14 @@ class ClassSearcher extends React.Component {
             onClose={() => {this.setState({
                 courseID: null
             })}}>
-                <div style={getModalStyle()} className={classes.paper}>
-                    <CourseClasses courseID={this.state.courseID} onClassSelected={(c) => {
-                        this.props.onClassSelected(c);
+                <div style={getModalStyle()} className={classes.modalPaper}>
+                    <CourseClasses courseID={this.state.courseID} onClassSelected={(classID) => { 
+                        this.props.onClassSelected(classID); 
+                        this.setState({
+                            "courseID": null,
+                            "searchValue": ""
+                        }) 
                     }} />
-                    <Button onClick={this.props.onClassCreate}>Create Class</Button>
                 </div>
             </Modal>
             <Autosuggest
