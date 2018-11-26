@@ -14,6 +14,7 @@ import AddIcon from '@material-ui/icons/Add';
 import { Parallax, Icon } from 'react-parallax';
 import UserSearcher from './UserSearcher'
 import ChatCreator from './ChatCreator';
+import Calendar from './Calendar';
 
 Amplify.configure(AwsExports);
 
@@ -540,7 +541,7 @@ class Group extends Component {
                     <Typography style={{"margin-left": 7}} variant="h4" gutterBottom>
                         Members
                     </Typography>
-                    <UserChips users={this.state.users} onUserEdit={(this.state.writable)? (user) => {this.setState({"editUser": user})}: null} size={45} />
+                    <UserChips users={this.state.users} onUserEdit={(this.state.writable && this.state.writePrivate)? (user) => {this.setState({"editUser": user})}: null} size={45} />
                 </Grid>
                 <Grid key={"1"} item xs={6} style={{"textAlign": "center"}}>
                     {
@@ -576,6 +577,7 @@ class Group extends Component {
                 </Grid>
                 <Grid key={"0"} item xs={3} style={{"textAlign": "center"}} />
             </Grid>
+            <Calendar mutable={true} groupName={this.props.groupName} />
         </div>);
 
         var renderNotInvited = (<div>

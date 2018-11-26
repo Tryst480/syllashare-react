@@ -91,6 +91,9 @@ class Calendar extends Component {
                 "events": this.props.events
             });
         }
+        if (this.props.groupName != null) {
+            this.getGroupEvents(this.props.groupName);
+        }
     }
 
     componentWillReceiveProps(nextProps) {
@@ -100,6 +103,26 @@ class Calendar extends Component {
                 "events": nextProps.events
             });
         }
+    }
+
+    getGroupEvents(groupName) {
+        API.graphql(graphqlOperation(queries.getGroup, {
+            "groupName": groupName
+        })).then((resp) => {
+            console.log("GetGroupEvents RESULT: ", resp);
+            var events = resp.data.getGroup.group.events;
+            var results = [];
+            for (var evt of events) {
+                var time = parseInt(evt.time);
+                results.push({ "localID": uuidv4(), "globalID": evt.id, "title": evt.name, "start": new Date(time), "end": new Date(time + evt.mins * 60 * 1000), "priority": evt.priority })
+            }
+            this.setState({
+                "events": results
+            })
+        })
+        .catch((e) => {
+            console.log("GetGroupEvents Error", e);
+        });
     }
 
     hideModal = () => {
@@ -209,6 +232,9 @@ class Calendar extends Component {
                 "groupName": groupName,
                 "events": events
             })).then((resp) => {
+                this.setState({
+                    "updatedEvents": []
+                });
                 console.log("Events saved!");
                 if (this.props.onSaveComplete != null) {
                     this.props.onSaveComplete(groupName);
@@ -218,6 +244,22 @@ class Calendar extends Component {
                 console.log("UpdateEvents Error", e);
             });
         };
+
+        var deleteEventIDs = (groupName, eventIDs) => {
+            API.graphql(graphqlOperation(mutations.deleteEvents, {
+                "groupName": groupName,
+                "eventIDs": eventIDs
+            })).then((resp) => {
+                console.log("Events deleted!");
+                this.setState({
+                    "deletedEventIDs": []
+                })
+            })
+            .catch((e) => {
+                console.log("DeleteEvents Error", e);
+            });
+        }
+
         if (this.props.onSave != null) {
             this.props.onSave(this.state.events, (groupName, events) => {
                 updateEvents(groupName, events);
@@ -225,9 +267,14 @@ class Calendar extends Component {
         } else {
             var events = [];
             for (var evt of this.state.updatedEvents) {
-                events.push({"name": evt.name, })
+                events.push({"name": evt.name, "time": evt.time, "mins": evt.mins, "priority": evt.priority, "id": evt.globalID });
             }
-            updateEvents(this.props.groupName, events);
+            if (events.length > 0) {
+                updateEvents(this.props.groupName, events);
+            }
+            if (this.state.deletedEventIDs.length > 0) {
+                deleteEventIDs(this.props.groupName, this.state.deletedEventIDs);
+            }
         }
     }
 
@@ -350,28 +397,35 @@ class Calendar extends Component {
                         var localID = this.state.eventLocalID;
                         var updatedEvents = this.state.updatedEvents;
                         var events = this.state.events;
-                        if (localID != null) {
-                            for (var evt of updatedEvents) {
-                                if (evt.localID == localID) {
-                                    evt.name = this.state.eventName;
-                                    evt.time = time;
-                                    evt.mins = mins;
-                                    evt.priority = this.state.eventPriority;
-                                    break;
-                                }
+                        var updatedEventFound = false;
+                        var eventFound = false;
+                        for (var evt of updatedEvents) {
+                            if (evt.localID == localID) {
+                                evt.name = this.state.eventName;
+                                evt.time = time;
+                                evt.mins = mins;
+                                evt.priority = this.state.eventPriority;
+                                updatedEventFound = true;
+                                break;
                             }
-                            for (var evt of events) {
-                                if (evt.localID == localID) {
-                                    evt.title = this.state.eventName;
-                                    evt.start = new Date(time);
-                                    evt.end = new Date(time + duration);
-                                    evt.priority = this.state.eventPriority;
-                                    break;
-                                }
+                        }
+                        for (var evt of events) {
+                            if (evt.localID == localID) {
+                                evt.title = this.state.eventName;
+                                evt.start = new Date(time);
+                                evt.end = new Date(time + duration);
+                                evt.priority = this.state.eventPriority;
+                                eventFound = true;
+                                break;
                             }
-                        } else {
+                        }
+                        if (localID == null) {
                             localID = uuidv4();
+                        }
+                        if (!updatedEventFound) {
                             updatedEvents.push({ "name": this.state.eventName, "time": time, "mins": mins, "priority": this.state.eventPriority, "globalID": this.state.eventGlobalID, "localID": localID });
+                        }
+                        if (!eventFound) {
                             events.push({ "localID": localID, "title": this.state.eventName, "start": new Date(time), "end": new Date(time + duration), "priority": this.state.eventPriority, "globalID": this.state.eventGlobalID });
                         }
                         this.setState({
