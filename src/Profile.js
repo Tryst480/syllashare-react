@@ -309,6 +309,23 @@ class Profile extends React.Component {
   }
 
   onGoogleSignIn(gs) {
+    /*
+    var auth2 = window.gapi.auth2.getAuthInstance();
+
+    var options = new window.gapi.auth2.SigninOptionsBuilder(
+      {'scope': 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events'});
+
+
+    var googleUser = auth2.currentUser.get();
+    googleUser.grantOfflineAccess(options).then(
+    function(success){
+      console.log(JSON.stringify({message: "success", value: success}));
+    },
+    function(fail){
+      alert(JSON.stringify({message: "fail", value: fail}));
+    });
+    */
+    
     fetch(BackendExports.Url + '/api/exchangegoogle', 
     {
         method: 'POST',
@@ -325,6 +342,7 @@ class Profile extends React.Component {
             console.log("REFRESH TOKEN SUBMITTED");
         }
     })
+    
   }
 
   handleEditProfileImgClose() {
@@ -597,7 +615,7 @@ class Profile extends React.Component {
                                 clientId={GcpExports.clientID}
                                 responseType="code"
                                 accessType="offline"
-                                scope="profile email"
+                                scope="profile access https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events"
                                 uxMode="redirect"
                                 redirect_uri="postmessage"
                                 onSuccess={this.onGoogleSignIn.bind(this)}

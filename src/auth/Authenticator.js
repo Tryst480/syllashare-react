@@ -73,7 +73,8 @@ class Authenticator extends Component {
         window.gapi.load('auth2', () => 
         { 
             this.gAuth = window.gapi.auth2.init({
-                client_id: GcpExports.clientID
+                client_id: GcpExports.clientID,
+                scope: 'profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events'
             });
             this.gAuth.then(() => {
                 //Check if a google user is logged in
@@ -109,9 +110,7 @@ class Authenticator extends Component {
                     if (response.ok) {
                         console.log("REFRESH TOKEN SUBMITTED");
                     }
-                })
-            }).catch((e) => {
-                console.error("Google Sign in failed: ", e)
+                });
             });
         });
     }
@@ -122,6 +121,7 @@ class Authenticator extends Component {
             if (this.gAuth.isSignedIn.get()) {
                 var user = this.gAuth.currentUser.get();
                 var idToken = user.getAuthResponse().id_token;
+
                 //Sign in using saved id token
                 this.signIn("accounts.google.com", idToken).then((syllaToken) => {
                     resolve(syllaToken);
@@ -248,12 +248,13 @@ class Authenticator extends Component {
                     <Typography variant="display1" gutterBottom>
                         Join SyllaShare!
                     </Typography>
+                    
                     <GoogleLogin
                         className={classes.googleLogin}
                         clientId={GcpExports.clientID}
                         responseType="code"
                         accessType="offline"
-                        scope="profile email"
+                        scope="profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events"
                         uxMode="redirect"
                         redirect_uri="postmessage"
                         onSuccess={this.onGoogleSignIn.bind(this)}
