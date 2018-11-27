@@ -256,6 +256,12 @@ class Profile extends React.Component {
         changedBody[key] = this.state.fields[key];
       }
     }
+    for (var key in this.state.user) {
+      console.log("CHECK KEY: ", key, this.state.user[key], this.state.fields[key]);
+      if (changedBody[key] == null && this.state.user[key] != this.state.fields[key]) {
+        changedBody[key] = this.state.fields[key];
+      }
+    }
     console.log("CHANGED BODY: ", changedBody);
     fetch(BackendExports.Url + '/api/modifyuser', 
     {
@@ -440,22 +446,25 @@ class Profile extends React.Component {
               style={{background: "#FFFFFF"}}
               value={(this.state.fields.school != null)? this.state.fields.school.name: "No School"}
               onChange={(event) => {
+                console.log("ON SELECT CHANGE: ", event);
                 var schoolName = event.target.value;
-                for (var school of this.state.schools) {
-                  if (school.name == schoolName) {
-                    var newFields = this.state.fields;
-                    newFields["school"] = school;
-                    console.log("NEW FIELDS: ", newFields);
-                    this.setState({
-                      fields: newFields
-                    });
-                    Storage.get(school.picKey.substr(7), { level: 'public' })
-                    .then(picResult => this.setState({ "schoolPicUrl": picResult }))
-                    .catch(err => console.error("GET SCHOOL PIC ERR: " + err));
-                    return;
+                if (schoolName != null) {
+                  for (var school of this.state.schools) {
+                    if (school.name == schoolName) {
+                      var newFields = this.state.fields;
+                      newFields["school"] = school;
+                      console.log("NEW FIELDS: ", newFields);
+                      this.setState({
+                        fields: newFields
+                      });
+                      Storage.get(school.picKey.substr(7), { level: 'public' })
+                      .then(picResult => this.setState({ "schoolPicUrl": picResult }))
+                      .catch(err => console.error("GET SCHOOL PIC ERR: " + err));
+                      return;
+                    }
                   }
                 }
-                var newFields = this.state.fields;
+                var newFields = JSON.parse(JSON.stringify(this.state.fields));
                 newFields["school"] = null;
                 this.setState({
                   fields: newFields,
