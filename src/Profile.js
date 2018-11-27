@@ -451,7 +451,7 @@ class Profile extends React.Component {
                 if (schoolName != null) {
                   for (var school of this.state.schools) {
                     if (school.name == schoolName) {
-                      var newFields = this.state.fields;
+                      var newFields = JSON.parse(JSON.stringify(this.state.fields));
                       newFields["school"] = school;
                       console.log("NEW FIELDS: ", newFields);
                       this.setState({
