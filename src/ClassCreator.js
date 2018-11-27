@@ -110,6 +110,10 @@ class ClassCreator extends Component {
             this.setState({
                 "termStart": toTime(resp.data.getTerm.start),
                 "termEnd": toTime(resp.data.getTerm.end)
+            }, () => {
+                if (this.state.selectedWeekDays.length > 0 && this.state.school != null) {
+                    this.setClassEvents();
+                }
             });
         }).catch((err) => {
             console.error("GetTerm error:", err);
@@ -238,6 +242,10 @@ class ClassCreator extends Component {
                         "courseID": response.class_number,
                         "courseName": response.class_title,
                         "scanEvents": response.events
+                    }, () => {
+                        if (this.state.school != null && this.state.termStart != null && this.state.selectedWeekDays.length > 0) {
+                            this.setClassEvents();
+                        }
                     })
                 })
             })
@@ -255,13 +263,27 @@ class ClassCreator extends Component {
                         <Typography variant="h3" gutterBottom>
                             Create Class
                         </Typography>
-                        { (this.state.scanEvents == null)? (
-                            <Dropzone
-                                style={{"width" : "100%", "height" : "200px", "border" : "1px solid black", "textAlign": "center"}}
-                                onDrop={this.onDrop.bind(this)}>
-                                <p>Drag and Drop Syllabus<br/> (or click to manually select)</p>
-                            </Dropzone>): <div />
-                        }
+                        <Grid
+                            container
+                            spacing={0}
+                            direction="column"
+                            alignItems="center"
+                            justify="center">
+                            <Grid item xs={12}>
+                                { (this.state.scanEvents == null)? (
+                                    <Dropzone
+                                        style={{"width" : "100%", 
+                                            "height" : "75px", 
+                                            "borderRadius": "5px",
+                                            "border" : "1px solid blue", 
+                                            "textAlign": "center" }}
+                                        onDrop={this.onDrop.bind(this)}>
+                                        <p>Drag and Drop Syllabus<br/> (or click to manually select)</p>
+                                    </Dropzone>): <div />
+                                }
+                            </Grid>
+                        </Grid>
+                        <br />
                         <Grid
                             container
                             spacing={0}
@@ -379,6 +401,9 @@ class ClassCreator extends Component {
                                             }, () => {
                                                 if (e.target.value.length >= 4 && this.state.school != null && this.state.term != null) {
                                                     this.getTerm();
+                                                    if (this.state.selectedWeekDays.length > 0) {
+                                                        this.setClassEvents();
+                                                    }
                                                 }
                                             });
                                         }}
