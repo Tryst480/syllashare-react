@@ -241,11 +241,9 @@ class Profile extends React.Component {
   }
 
   handleChange = name => event => {
-    this.setState({
-      fields: {
-        [name]: event.target.value
-      }
-    });
+    var fields = this.state.fields;
+    fields[name] = event.target.value;
+    this.setState(fields);
   };
 
   onUpdate() {
