@@ -15,6 +15,7 @@ import { Parallax, Icon } from 'react-parallax';
 import UserSearcher from './UserSearcher'
 import ChatCreator from './ChatCreator';
 import Calendar from './Calendar';
+import uuidv4 from 'uuid/v4';
 
 Amplify.configure(AwsExports);
 
@@ -89,7 +90,9 @@ class Group extends Component {
             sendInviteUsers: [],
             createChatModal: false,
             inviteModal: false,
-            writableInvites: true
+            writableInvites: true,
+            showEvents: true,
+            memberEvents: []
         };
     }
 
@@ -331,6 +334,10 @@ class Group extends Component {
                 this.setState({
                     "invites": newInvites,
                     "users": newUsers
+                }, () => {
+                    if (!this.state.showEvents) {
+                        this.getMemberEvents();
+                    }
                 });
             },
             error: (error) => {
@@ -370,6 +377,10 @@ class Group extends Component {
                         newUsers.splice(i, 1);
                         this.setState({
                             "users": newUsers
+                        }, () => {
+                            if (!this.state.showEvents) {
+                                this.getMemberEvents();
+                            }
                         });
                         return;
                     }
@@ -421,6 +432,29 @@ class Group extends Component {
         })
         .catch((ex) => {
             console.error("GROUP INVITE ERROR: ", ex);
+        })
+    }
+
+    getMemberEvents() {
+        var promises = [];
+        for (var user of this.state.users) {
+            promises.push(API.graphql(graphqlOperation(queries.getUserEvents, { "userID": this.props.userID })));
+        }
+        Promise.all(promises).then((results) => {
+            var totalEvents = [];
+            for (var data of results) {
+                console.log("RESULT: ", data);
+                for (var evt of data.data.getUserEvents) {
+                    var time = parseInt(evt.time);
+                    var start = new Date(time);
+                    var end = new Date(time + evt.mins * 60 * 1000);
+                    var localID = uuidv4();
+                    totalEvents.push({ "title": evt.name, "start":start, "end": end, "priority": evt.priority, "localID": localID });
+                }
+            }
+            this.setState({ "memberEvents": totalEvents, "showEvents": false });
+        }).catch((ex) => {
+            console.log("GetMemberEvents failed: ", ex);
         })
     }
 
@@ -574,10 +608,23 @@ class Group extends Component {
                             Create Chat
                         </Button>
                     </Paper>
+                    <br />
+                    <div style={{"textAlign": "center"}}>
+                        <FormLabel component="legend"><b>Calendar</b></FormLabel>
+                        <FormControlLabel control={<Switch
+                                label="Write"
+                                checked={this.state.showEvents}
+                                onChange={(evt) => { console.log("CEVT", evt); if (!evt.target.checked) { this.getMemberEvents() }; this.setState({"showEvents": evt.target.checked }) }}
+                                value={this.state.showEvents}
+                            />} label={(this.state.showEvents)? "Events": "Availability"} />
+                    </div>
                 </Grid>
                 <Grid key={"0"} item xs={3} style={{"textAlign": "center"}} />
             </Grid>
-            <Calendar mutable={true} groupName={this.props.groupName} />
+            {
+                (this.state.showEvents)? (<Calendar key={"events"} mutable={true} groupName={this.props.groupName} />): 
+                    <Calendar key={"memberEvents"} mutable={false} events={this.state.memberEvents} />
+            }
         </div>);
 
         var renderNotInvited = (<div>
