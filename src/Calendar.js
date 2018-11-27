@@ -306,6 +306,22 @@ class Calendar extends Component {
     ColourValue = () => {
         "GREEN";
     }
+
+    eventStyleGetter = (event, start, end, isSelected) => {
+        console.log("EVENT STYLE GETTER:", event);
+        var backgroundColor = "DarkCyan";
+        if (event.priority == 1) {
+            backgroundColor = "orangered";
+        } else if (event.priority == 2) {
+            backgroundColor = "darkred";
+        }
+        var style = {
+            backgroundColor: backgroundColor
+        };
+        return {
+            style: style
+        };
+    }
     
     onSave = () => {
         var updateEvents = (groupName, events) => {
@@ -545,6 +561,7 @@ class Calendar extends Component {
                 popupOffset={30}
                 onSelectEvent={this.handleSelectEvent.bind(this)}
                 onSelectSlot={this.handleSelectEmpty.bind(this)}
+                eventPropGetter={this.eventStyleGetter.bind(this)}
             />
             <div style={{"textAlign": "center"}}>
                 {
