@@ -308,7 +308,6 @@ class Calendar extends Component {
     }
 
     eventStyleGetter = (event, start, end, isSelected) => {
-        console.log("EVENT STYLE GETTER:", event);
         var backgroundColor = "DarkCyan";
         if (event.priority == 1) {
             backgroundColor = "orangered";

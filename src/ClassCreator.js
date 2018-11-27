@@ -76,6 +76,27 @@ class ClassCreator extends Component {
 
     componentWillMount() {
         var syllaToken = this.props["syllaToken"];
+        fetch(BackendExports.Url + '/api/getuser', 
+            {
+                method: 'GET',
+                headers: new Headers({
+                    "authorization": syllaToken
+                }),
+                credentials: 'include'
+            })
+            .then((response) => {
+                return response.json();
+            })
+            .then((response) => {
+                if (response.school != null) {
+                    this.setState({
+                        "school": response.school
+                    });
+                }
+            }).catch((err) => {
+              console.error("GetUser Ex: ", err);
+            });
+
         fetch(BackendExports.Url + '/api/getschools', 
         {
             method: 'GET',
@@ -111,9 +132,7 @@ class ClassCreator extends Component {
                 "termStart": toTime(resp.data.getTerm.start),
                 "termEnd": toTime(resp.data.getTerm.end)
             }, () => {
-                if (this.state.selectedWeekDays.length > 0 && this.state.school != null) {
-                    this.setClassEvents();
-                }
+                this.setClassEvents();
             });
         }).catch((err) => {
             console.error("GetTerm error:", err);
@@ -121,7 +140,9 @@ class ClassCreator extends Component {
     }
 
     setClassEvents() {
-        console.log("Setting class events");
+        if (this.state.term == null || this.state.school == null || this.state.year == null || this.state.year.length != 4 || this.state.startTime == null || this.state.endTime == null || this.state.selectedWeekDays.length == 0) {
+            return;
+        }
         var toTime = (str) => {
             var colonIdx = str.indexOf(":");
             var hour = parseInt(str.substr(0, colonIdx));
@@ -130,6 +151,10 @@ class ClassCreator extends Component {
         };
         var time = this.state.termStart + toTime(this.state.startTime);
         var duration = toTime(this.state.endTime) - toTime(this.state.startTime);
+        if (duration <= 0) {
+            return;
+        }
+        console.log("Setting class events");
         var dayNums = [false, false, false, false, false, false, false];
         for (var day of this.state.selectedWeekDays) {
             dayNums[this.state.weekdays.indexOf(day)] = true;
@@ -243,9 +268,7 @@ class ClassCreator extends Component {
                         "courseName": response.class_title,
                         "scanEvents": response.events
                     }, () => {
-                        if (this.state.school != null && this.state.termStart != null && this.state.selectedWeekDays.length > 0) {
-                            this.setClassEvents();
-                        }
+                        this.setClassEvents();
                     })
                 })
             })
@@ -401,9 +424,7 @@ class ClassCreator extends Component {
                                             }, () => {
                                                 if (e.target.value.length >= 4 && this.state.school != null && this.state.term != null) {
                                                     this.getTerm();
-                                                    if (this.state.selectedWeekDays.length > 0) {
-                                                        this.setClassEvents();
-                                                    }
+                                                    this.setClassEvents();
                                                 }
                                             });
                                         }}
@@ -423,9 +444,7 @@ class ClassCreator extends Component {
                                                 alignment = [];
                                             }
                                             this.setState({ "selectedWeekDays": alignment }, () => {
-                                                if (this.state.selectedWeekDays.length > 0 && this.state.startTime.length > 0 && this.state.endTime.length > 0) {
-                                                    this.setClassEvents();
-                                                }
+                                                this.setClassEvents();
                                             });
                                             console.log(alignment);
                                         }}>
@@ -453,6 +472,8 @@ class ClassCreator extends Component {
                                                 onChange={(e) => {
                                                     this.setState({
                                                         "startTime": e.target.value
+                                                    }, () => {
+                                                        this.setClassEvents();
                                                     });
                                                 }} />
                                         </Grid>
@@ -474,6 +495,8 @@ class ClassCreator extends Component {
                                                 onChange={(e) => {
                                                     this.setState({
                                                         "endTime": e.target.value
+                                                    }, () => {
+                                                        this.setClassEvents();
                                                     });
                                                 }} />
                                         </Grid>
