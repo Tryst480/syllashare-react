@@ -66,6 +66,88 @@ function getModalStyle() {
     };
 }
 
+//Hsv to RGB converter (not mine)
+function hsvToRgb(h, s, v) {
+	var r, g, b;
+	var i;
+	var f, p, q, t;
+ 
+	// Make sure our arguments stay in-range
+	h = Math.max(0, Math.min(360, h));
+	s = Math.max(0, Math.min(100, s));
+	v = Math.max(0, Math.min(100, v));
+ 
+	// We accept saturation and value arguments from 0 to 100 because that's
+	// how Photoshop represents those values. Internally, however, the
+	// saturation and value are calculated from a range of 0 to 1. We make
+	// That conversion here.
+	s /= 100;
+	v /= 100;
+ 
+	if(s == 0) {
+		// Achromatic (grey)
+		r = g = b = v;
+		return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+	}
+ 
+	h /= 60; // sector 0 to 5
+	i = Math.floor(h);
+	f = h - i; // factorial part of h
+	p = v * (1 - s);
+	q = v * (1 - s * f);
+	t = v * (1 - s * (1 - f));
+ 
+	switch(i) {
+		case 0:
+			r = v;
+			g = t;
+			b = p;
+			break;
+ 
+		case 1:
+			r = q;
+			g = v;
+			b = p;
+			break;
+ 
+		case 2:
+			r = p;
+			g = v;
+			b = t;
+			break;
+ 
+		case 3:
+			r = p;
+			g = q;
+			b = v;
+			break;
+ 
+		case 4:
+			r = t;
+			g = p;
+			b = v;
+			break;
+ 
+		default: // case 5:
+			r = v;
+			g = p;
+			b = q;
+	}
+ 
+	return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+//HSV to rgb converter (not mine)
+function randomColors(total)
+{
+    var i = 360 / (total - 1); // distribute the colors evenly on the hue range
+    var r = []; // hold the generated colors
+    for (var x=0; x<total; x++)
+    {
+        r.push(hsvToRgb(i * x, 100, 100)); // you can also alternate the saturation and value for even more contrast between the colors
+    }
+    return r;
+}
 
 class Calendar extends Component {
     constructor(...args) {
@@ -143,7 +225,7 @@ class Calendar extends Component {
                     }
                     if (!found) {
                         console.log("PUSHED");
-                        localEvents.push({ "globalID": evt.id, "localID": uuidv4(), "title": evt.name, "startTime": startTime, "end": endTime, "priority": evt.priority })
+                        localEvents.push({ "globalID": evt.id, "localID": uuidv4(), "title": evt.name, "start": startTime, "end": endTime, "priority": evt.priority })
                     }
                     i++;
                 }
@@ -167,12 +249,19 @@ class Calendar extends Component {
 
         this.eventDeleteSubscription = API.graphql(graphqlOperation(subscriptions.subEventsDeleted, { "groupName": groupName })).subscribe({
             next: (data) => {
-                var events = data.value.data.subEventsDeleted["events"];
+                var deletedEvents = data.value.data.subEventsDeleted["events"];
                 var newEvents = [];
-                for (var evt of events) {
-                    var startTime = new Date(parseInt(evt.time));
-                    var endTime = new Date(parseInt(evt.time) + evt.mins * 60 * 1000);
-                    newEvents.push({ "title": evt.name, "localID": uuidv4(), "globalID": evt.id, "start": startTime, "end": endTime, "priority": evt.priority });
+                for (var localEvent of this.state.events) {
+                    var found = false;
+                    for (var deletedEvent of deletedEvents) {
+                        if (deletedEvent.id == localEvent.globalID) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found){
+                        newEvents.push(localEvent);
+                    }
                 }
                 this.setState({
                     "events": newEvents,
@@ -207,7 +296,12 @@ class Calendar extends Component {
     }
 
     hideModal = () => {
-        this.setState({ showEvent: false });
+        this.setState({ 
+            showEvent: false, 
+            eventStartTime: "07:30",
+            eventEndTime: "08:45",
+            eventName: "",
+            eventPriority: 0 });
     };
 
     deleteEvent = () => {
@@ -323,15 +417,34 @@ class Calendar extends Component {
     }
     
     onSave = () => {
+        var deleteLocalEvents = (events) => {
+            var localIDMap = {};
+            for (var updatedEvent of events) {
+                localIDMap[updatedEvent.localID] = true;
+            }
+            console.log("LOCALID MAP: ", localIDMap);
+            var localEvents = this.state.events;
+            var newEvents = [];
+            var i = 0;
+            while (i < localEvents.length) {
+                if (localIDMap[localEvents[i].localID] == null) {
+                    newEvents.push(localEvents[i]);
+                }
+                i++;
+            }
+            this.setState({
+                "events": newEvents,
+                "updatedEvents": []
+            });
+        }
+
         var updateEvents = (groupName, events) => {
             API.graphql(graphqlOperation(mutations.updateEvents, {
                 "groupName": groupName,
                 "events": events
             })).then((resp) => {
-                this.setState({
-                    "updatedEvents": []
-                });
                 console.log("Events saved!");
+                deleteLocalEvents(this.state.updatedEvents);
                 if (this.props.onSaveComplete != null) {
                     this.props.onSaveComplete(groupName);
                 }
@@ -374,7 +487,76 @@ class Calendar extends Component {
         }
     }
 
-    renderModal(){
+    onEventUpdate() {
+        var dayStartMillis = 0;
+        {
+            var colonIdx = this.state.eventStartTime.indexOf(':');
+            var hours = this.state.eventStartTime.substr(0, colonIdx);
+            var mins = this.state.eventStartTime.substr(colonIdx + 1);
+            console.log("HOURS:", hours, "MINS: ", mins);
+            dayStartMillis = (parseInt(hours) * 60 + parseInt(mins)) * 60 * 1000;
+        }
+
+        var dayEndMillis = 0;
+        {
+            var colonIdx = this.state.eventEndTime.indexOf(':');
+            var hours = this.state.eventEndTime.substr(0, colonIdx);
+            var mins = this.state.eventEndTime.substr(colonIdx + 1);
+            dayEndMillis = (parseInt(hours) * 60 + parseInt(mins)) * 60 * 1000;
+        }
+        if (dayEndMillis < dayStartMillis) {
+            console.log("Invalid end time");
+            return;
+        }
+        console.log("START", this.state.start.getTime());
+        var time = this.state.start.getTime() + dayStartMillis;
+        console.log("TIME: ", time);
+        var duration = dayEndMillis - dayStartMillis
+        var mins = duration / (60 * 1000);
+
+        var localID = this.state.eventLocalID;
+        var updatedEvents = this.state.updatedEvents;
+        var events = this.state.events;
+        var updatedEventFound = false;
+        var eventFound = false;
+        for (var evt of updatedEvents) {
+            if (evt.localID == localID) {
+                evt.name = this.state.eventName;
+                evt.time = time;
+                evt.mins = mins;
+                evt.priority = this.state.eventPriority;
+                updatedEventFound = true;
+                break;
+            }
+        }
+        for (var evt of events) {
+            if (evt.localID == localID) {
+                evt.title = this.state.eventName;
+                evt.start = new Date(time);
+                evt.end = new Date(time + duration);
+                evt.priority = this.state.eventPriority;
+                eventFound = true;
+                break;
+            }
+        }
+        if (localID == null) {
+            localID = uuidv4();
+        }
+        if (!updatedEventFound) {
+            updatedEvents.push({ "name": this.state.eventName, "time": time, "mins": mins, "priority": this.state.eventPriority, "globalID": this.state.eventGlobalID, "localID": localID });
+        }
+        if (!eventFound) {
+            events.push({ "localID": localID, "title": this.state.eventName, "start": new Date(time), "end": new Date(time + duration), "priority": this.state.eventPriority, "globalID": this.state.eventGlobalID });
+        }
+        this.setState({
+            "events": events,
+            "updatedEvents": updatedEvents,
+            "eventName": "",
+            "showEvent": false
+        });
+    }
+
+    renderModal() {
         const { classes } = this.props;
         return (
             <div>
@@ -399,144 +581,83 @@ class Calendar extends Component {
                                 });
                             }}
                             />
-                        <Grid item xs={12} sm={6}>
-                            <form className={classes.container} noValidate >
-                                <TextField
-                                    id="time"
-                                    label="Event Start Time"
-                                    type="time"
-                                    className={classes.textField}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    inputProps={{
-                                        step: 300, // 5 min
-                                    }}
-                                    value={this.state.eventStartTime}
-                                    onChange={(e) => {
-                                        this.setState({
-                                            "eventStartTime": e.target.value
-                                        });
-                                    }}
-                                />
-                            </form>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <form className={classes.container} noValidate >
-                                <TextField
-                                    id="time"
-                                    label="Event End Time"
-                                    type="time"
-                                    value={this.state.eventEndTime}
-                                    className={classes.textField}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    inputProps={{
-                                        step: 300, // 5 min
-                                    }}
-                                    onChange={(e) => {
-                                        this.setState({
-                                            "eventEndTime": e.target.value
-                                        });
-                                    }}
-                                />
-                            </form>
-                        </Grid>
-                        <FormControl className={classes.formControl}>
-                            <InputLabel htmlFor="age-simple">Priority</InputLabel>
-                            <Select
-                                style={{background: "#FFFFFF"}}
-                                value={(this.state.eventPriority != null)? this.state.eventPriority: "Select A Priority"}
-                                onChange={(event) => {
-                                    this.setState({
-                                        eventPriority: event.target.value
-                                    });
+                        <Grid item xs={12}>
+                            <TextField
+                                id="time"
+                                label="Event Start Time"
+                                type="time"
+                                className={classes.textField}
+                                InputLabelProps={{
+                                    shrink: true,
                                 }}
                                 inputProps={{
-                                    name: 'school',
-                                    id: 'school-simple',
-                                }}>
-                                    <MenuItem value={0}>Low</MenuItem>
-                                    <MenuItem value={1}>Medium</MenuItem>
-                                    <MenuItem value={2}>High</MenuItem>
-                            </Select>
-                        </FormControl>
+                                    step: 300, // 5 min
+                                }}
+                                value={this.state.eventStartTime}
+                                onChange={(e) => {
+                                    this.setState({
+                                        "eventStartTime": e.target.value
+                                    });
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                id="time"
+                                label="Event End Time"
+                                type="time"
+                                value={this.state.eventEndTime}
+                                className={classes.textField}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                inputProps={{
+                                    step: 300, // 5 min
+                                }}
+                                onChange={(e) => {
+                                    this.setState({
+                                        "eventEndTime": e.target.value
+                                    });
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <FormControl className={classes.formControl}>
+                                <InputLabel htmlFor="age-simple">Priority</InputLabel>
+                                <Select
+                                    style={{background: "#FFFFFF"}}
+                                    value={(this.state.eventPriority != null)? this.state.eventPriority: "Select A Priority"}
+                                    onChange={(event) => {
+                                        this.setState({
+                                            eventPriority: event.target.value
+                                        });
+                                    }}
+                                    inputProps={{
+                                        name: 'school',
+                                        id: 'school-simple',
+                                    }}>
+                                        <MenuItem value={0}>Low</MenuItem>
+                                        <MenuItem value={1}>Medium</MenuItem>
+                                        <MenuItem value={2}>High</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
                     </Grid>
-                    <Button disabled={!(this.state.eventStartTime.length > 0 && this.state.eventEndTime.length > 0 && this.state.eventName.length > 0)} onClick={() => {
-                        var dayStartMillis = 0;
-                        {
-                            var colonIdx = this.state.eventStartTime.indexOf(':');
-                            var hours = this.state.eventStartTime.substr(0, colonIdx);
-                            var mins = this.state.eventStartTime.substr(colonIdx + 1);
-                            console.log("HOURS:", hours, "MINS: ", mins);
-                            dayStartMillis = (parseInt(hours) * 60 + parseInt(mins)) * 60 * 1000;
-                        }
-
-                        var dayEndMillis = 0;
-                        {
-                            var colonIdx = this.state.eventEndTime.indexOf(':');
-                            var hours = this.state.eventEndTime.substr(0, colonIdx);
-                            var mins = this.state.eventEndTime.substr(colonIdx + 1);
-                            dayEndMillis = (parseInt(hours) * 60 + parseInt(mins)) * 60 * 1000;
-                        }
-                        if (dayEndMillis < dayStartMillis) {
-                            console.log("Invalid end time");
-                            return;
-                        }
-                        console.log("START", this.state.start.getTime());
-                        var time = this.state.start.getTime() + dayStartMillis;
-                        console.log("TIME: ", time);
-                        var duration = dayEndMillis - dayStartMillis
-                        var mins = duration / (60 * 1000);
-
-                        var localID = this.state.eventLocalID;
-                        var updatedEvents = this.state.updatedEvents;
-                        var events = this.state.events;
-                        var updatedEventFound = false;
-                        var eventFound = false;
-                        for (var evt of updatedEvents) {
-                            if (evt.localID == localID) {
-                                evt.name = this.state.eventName;
-                                evt.time = time;
-                                evt.mins = mins;
-                                evt.priority = this.state.eventPriority;
-                                updatedEventFound = true;
-                                break;
-                            }
-                        }
-                        for (var evt of events) {
-                            if (evt.localID == localID) {
-                                evt.title = this.state.eventName;
-                                evt.start = new Date(time);
-                                evt.end = new Date(time + duration);
-                                evt.priority = this.state.eventPriority;
-                                eventFound = true;
-                                break;
-                            }
-                        }
-                        if (localID == null) {
-                            localID = uuidv4();
-                        }
-                        if (!updatedEventFound) {
-                            updatedEvents.push({ "name": this.state.eventName, "time": time, "mins": mins, "priority": this.state.eventPriority, "globalID": this.state.eventGlobalID, "localID": localID });
-                        }
-                        if (!eventFound) {
-                            events.push({ "localID": localID, "title": this.state.eventName, "start": new Date(time), "end": new Date(time + duration), "priority": this.state.eventPriority, "globalID": this.state.eventGlobalID });
-                        }
-                        this.setState({
-                            "events": events,
-                            "updatedEvents": updatedEvents,
-                            "eventName": "",
-                            "showEvent": false
-                        });
-                    }}>{(this.state.eventLocalID != null)? "Update": "Create"} Event</Button>
                     <br />
-                     {(this.state.eventLocalID != null)? (<Button variant="fab" color="secondary" 
-                      aria-label="Delete" className={classes.button}
-                      onClick={this.deleteEvent.bind(this)} >
-                      <DeleteIcon />
-                    </Button>): <div />}
+                    <Grid container justify="center" spacing={(this.state.eventLocalID == null)? 0: 16} xs={12}>
+                    <Grid key={"updateEventButton"} item >
+                    <Button variant="contained" color="primary" 
+                        disabled={!(this.state.eventStartTime.length > 0 && this.state.eventEndTime.length > 0 && this.state.eventName.length > 0)} 
+                        onClick={this.onEventUpdate.bind(this)}>{(this.state.eventLocalID != null)? "Update": "Create"}</Button>
+                    </Grid>
+                    {(this.state.eventLocalID != null)?(
+                        <Grid key={"deleteEventButton"} item>
+                        <Button variant="contained" color="secondary" 
+                            onClick={this.deleteEvent.bind(this)} >
+                                Delete
+                            </Button>
+                        </Grid>): null}
+                    </Grid>
                 </div>
             </Modal>
             </div>

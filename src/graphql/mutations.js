@@ -49,6 +49,7 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
         groupName
         classID
       }
+      courseID
     }
     user {
       id
@@ -94,6 +95,7 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!, $kickUserID:
         groupName
         classID
       }
+      courseID
     }
     user {
       id
@@ -147,6 +149,7 @@ export const inviteToGroup = `mutation InviteToGroup(
         groupName
         classID
       }
+      courseID
     }
     user {
       id
@@ -233,6 +236,7 @@ export const createClass = `mutation CreateClass(
   $courseName: String
   $teacherName: String
   $timeStr: String
+  $writePrivate: Boolean
 ) {
   createClass(
     courseID: $courseID
@@ -242,6 +246,7 @@ export const createClass = `mutation CreateClass(
     courseName: $courseName
     teacherName: $teacherName
     timeStr: $timeStr
+    writePrivate: $writePrivate
   ) {
     id
     course {
@@ -254,11 +259,19 @@ export const createClass = `mutation CreateClass(
     term
     year
     timeStr
+    group {
+      accepted
+      writable
+    }
   }
 }
 `;
-export const updateEvents = `mutation UpdateEvents($groupName: String!, $events: [EventInput]) {
-  updateEvents(groupName: $groupName, events: $events) {
+export const updateEvents = `mutation UpdateEvents(
+  $groupName: String
+  $events: [EventInput]
+  $personal: Boolean
+) {
+  updateEvents(groupName: $groupName, events: $events, personal: $personal) {
     events {
       id
       name
@@ -272,8 +285,16 @@ export const updateEvents = `mutation UpdateEvents($groupName: String!, $events:
   }
 }
 `;
-export const deleteEvents = `mutation DeleteEvents($groupName: String!, $eventIDs: [String]) {
-  deleteEvents(groupName: $groupName, eventIDs: $eventIDs) {
+export const deleteEvents = `mutation DeleteEvents(
+  $groupName: String
+  $eventIDs: [String]
+  $personal: Boolean
+) {
+  deleteEvents(
+    groupName: $groupName
+    eventIDs: $eventIDs
+    personal: $personal
+  ) {
     events {
       id
       name

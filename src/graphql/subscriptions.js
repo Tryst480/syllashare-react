@@ -33,6 +33,7 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
         groupName
         classID
       }
+      courseID
     }
     user {
       id
@@ -78,6 +79,7 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
         groupName
         classID
       }
+      courseID
     }
     user {
       id
@@ -123,6 +125,7 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
         groupName
         classID
       }
+      courseID
     }
     user {
       id
@@ -168,6 +171,7 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
         groupName
         classID
       }
+      courseID
     }
     user {
       id

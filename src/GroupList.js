@@ -158,23 +158,25 @@ class GroupList extends Component {
             next: (groupUserPair) => {
                 console.log("GOT NEW INVITE: ", groupUserPair);
                 var group = groupUserPair.value.data.subUserInviteToGroup["group"];
-                //Check if group is already added
-                for (var invite of this.state.invites) {
-                    if (invite.name == group.name) {
-                        return;
+                if (group.courseID == null) {
+                    //Check if group is already added
+                    for (var invite of this.state.invites) {
+                        if (invite.name == group.name) {
+                            return;
+                        }
                     }
-                }
-                var newInvites = this.state.invites;
-                var numMembers = 0;
-                for (var user of group.users) {
-                    if (user.accepted) {
-                        numMembers++;
+                    var newInvites = this.state.invites;
+                    var numMembers = 0;
+                    for (var user of group.users) {
+                        if (user.accepted) {
+                            numMembers++;
+                        }
                     }
+                    newInvites.push({ "name": group.name, "visibility": ((group.readPrivate)? "Private": "Public"), "members": numMembers });
+                    this.setState({
+                        invites: newInvites
+                    });
                 }
-                newInvites.push({ "name": group.name, "visibility": ((group.readPrivate)? "Private": "Public"), "members": numMembers });
-                this.setState({
-                    invites: newInvites
-                });
             },
             error: (error) => {
                 console.log("SUBInviteERR", JSON.stringify(error));
@@ -218,6 +220,7 @@ class GroupList extends Component {
                 </div>
             </Modal>
             <Paper className={classes.root}>
+                {(this.state.groups.length > 0)? (
                 <Table className={classes.table}>
                     <TableHead>
                         <TableRow>
@@ -239,7 +242,8 @@ class GroupList extends Component {
                         );
                     })}
                     </TableBody>
-                </Table>
+                </Table>): <div />
+                }
                 
                 {renderInviteList}
                 { (this.props.mutable)?

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, TextField, Select, Grid, MenuItem, FormControl, InputLabel, Switch, Chip, Avatar, Table, TableRow, TableCell, withStyles, FormControlLabel, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
+import { Button, TextField, Select, Grid, MenuItem, FormControl, FormLabel, InputLabel, Switch, Chip, Avatar, Table, TableRow, TableCell, withStyles, FormControlLabel, TableHead, TableBody, Paper, Typography, Grow, Collapse, Fade, CircularProgress } from '@material-ui/core';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import PropTypes from 'prop-types';
@@ -70,7 +70,8 @@ class ClassCreator extends Component {
             "endTime": "08:45",
             "termStart": null,
             "termEnd": null,
-            "classEvents": []
+            "classEvents": [],
+            "writePublic": true
         }
     }
 
@@ -189,7 +190,7 @@ class ClassCreator extends Component {
                 }
                 if (!scanEventFound) {
                     classEvents.push({
-                        "title": "Class",
+                        "title": ((this.state.courseID != null && this.state.courseID.length > 0)? (this.state.courseID + " "): "") + "Lecture",
                         "localID": uuidv4(),
                         "start": date,
                         "end": new Date(time + duration),
@@ -228,7 +229,8 @@ class ClassCreator extends Component {
             "year": parseInt(this.state.year),
             "courseName": this.state.courseName,
             "teacherName": this.state.teacherName,
-            "timeStr": timeStr
+            "timeStr": timeStr,
+            "writePrivate": !this.state.writePublic
         })).then((resp) => {
             console.log("Create Class Resp: ", resp);
             cb(resp.data.createClass.id, results);
@@ -307,14 +309,14 @@ class ClassCreator extends Component {
                             </Grid>
                         </Grid>
                         <br />
-                        <Grid
-                            container
-                            spacing={0}
-                            direction="column"
-                            alignItems="center"
-                            justify="center">
-                            <Grid item xs={10}>
-                                <Paper classes={classes.paper}>
+                        <Paper classes={classes.paper}>
+                            <Grid
+                                container
+                                spacing={0}
+                                direction="column"
+                                alignItems="center"
+                                justify="center">
+                                <Grid item xs={10}>
                                     <Typography variant="h4" gutterBottom>
                                         Course
                                     </Typography>
@@ -323,7 +325,7 @@ class ClassCreator extends Component {
                                         placeholder="CS3000"
                                         className={classes.textField}
                                         value={this.state.courseID}
-                                        onChange={(evt) => {this.setState({ courseID: evt.target.value })}}
+                                        onChange={(evt) => {this.setState({ courseID: evt.target.value }); this.setClassEvents();}}
                                         InputProps={{
                                             classes: {
                                                 input: classes.bigFont,
@@ -343,11 +345,11 @@ class ClassCreator extends Component {
                                         }}
                                         margin="normal"/>
                                     <br />
-                                    <FormControl className={classes.formControl}>
+                                    <FormControl style={{"marginBottom": 20}} className={classes.formControl}>
                                         <InputLabel htmlFor="age-simple">School</InputLabel>
                                         <Select
                                             style={{background: "#FFFFFF"}}
-                                            value={(this.state.school != null)? this.state.school.name: "Select A School"}
+                                            value={(this.state.school != null)? this.state.school.name: ""}
                                             onChange={(event) => {
                                                 var schoolName = event.target.value;
                                                 for (var school of this.state.schools) {
@@ -375,18 +377,17 @@ class ClassCreator extends Component {
                                             })}
                                         </Select>
                                     </FormControl>
-                                </Paper>
-                            </Grid>   
-                        </Grid>
-                        <hr />
-                        <Grid
-                            container
-                            spacing={0}
-                            direction="column"
-                            alignItems="center"
-                            justify="center">
-                            <Grid item xs={12}>
-                                <Paper classes={classes.paper}>
+                                </Grid>   
+                            </Grid>
+                        </Paper>
+                        <Paper style={{background: "#FDFDFD"}} classes={classes.paper}>
+                            <Grid
+                                container
+                                spacing={0}
+                                direction="column"
+                                alignItems="center"
+                                justify="center">
+                                <Grid item xs={12}>
                                     <Typography variant="h4" gutterBottom>
                                         Class
                                     </Typography>
@@ -436,7 +437,13 @@ class ClassCreator extends Component {
                                         margin="normal"
                                         />
                                     <br />
-                                    <TeacherSearcher onChange={(val) => {this.setState({"teacherName": val})}} />
+                                </Grid>
+                                <Grid item xs={3}>
+                                    <div>
+                                        <TeacherSearcher onChange={(val) => {this.setState({"teacherName": val})}} />
+                                    </div>
+                                </Grid>
+                                <Grid item xs={12}>
                                     <br />
                                     <div className={classes.toggleContainer}>
                                         <ToggleButtonGroup value={this.state.selectedWeekDays} onChange={(event, alignment) => { 
@@ -455,6 +462,7 @@ class ClassCreator extends Component {
                                             }
                                         </ToggleButtonGroup>
                                     </div>
+                                    <br />
                                     <Grid container className={classes.demo} justify="center" xs={12}>
                                         <Grid key={"0"} item className={classes.root} >
                                             <TextField
@@ -501,9 +509,32 @@ class ClassCreator extends Component {
                                                 }} />
                                         </Grid>
                                     </Grid>
-                                </Paper>
-                            </Grid>
+                                </Grid>
+                            <br />
                         </Grid>
+                        </Paper>
+                        <Paper style={{"background": "#FBFBFB"}} classes={classes.paper}>
+                            <Grid
+                                container
+                                spacing={0}
+                                direction="column"
+                                alignItems="center"
+                                justify="center">
+                                <Grid item xs={10}>
+                                    <Typography variant="h4" gutterBottom>
+                                        Access
+                                    </Typography>
+                                    <FormLabel component="legend">Write</FormLabel>
+                                    <FormControlLabel control={<Switch
+                                        label="Write"
+                                        checked={this.state.writePublic}
+                                        onChange={(evt) => {this.setState({ writePublic: evt.target.checked })}}
+                                        value={this.state.writePublic}
+                                    />} label={(this.state.writePublic)? "Public": "Private"} />
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                        <br />
                         {
                             (this.state.termStart != null)? <Calendar canSave={(this.props.courseID != null || 
                                 (this.state.courseID.length > 0 && this.state.courseName.length > 0 && this.state.school != null)) 

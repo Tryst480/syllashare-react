@@ -438,7 +438,7 @@ class Group extends Component {
     getMemberEvents() {
         var promises = [];
         for (var user of this.state.users) {
-            promises.push(API.graphql(graphqlOperation(queries.getUserEvents, { "userID": this.props.userID })));
+            promises.push(API.graphql(graphqlOperation(queries.getUserEvents, { "userID": user.id })));
         }
         Promise.all(promises).then((results) => {
             var totalEvents = [];
@@ -504,6 +504,19 @@ class Group extends Component {
                 </Grid>
             </Grid>);
         }
+
+
+        var excludedUsers = {};
+        this.state.sendInviteUsers.concat(this.state.users).concat(this.state.invites)
+        for (var user of this.state.sendInviteUsers) {
+            excludedUsers[user.username] = true;
+        }
+        for (var user of this.state.users) {
+            excludedUsers[user.username] = true;
+        }
+        for (var user of this.state.invites) {
+            excludedUsers[user.username] = true;
+        }
         var renderInGroup = (<div>
             <Modal
                 aria-labelledby="simple-modal-title"
@@ -519,7 +532,7 @@ class Group extends Component {
                         }}
                         size={30} />
                     <UserSearcher 
-                        excludedUsers={this.state.sendInviteUsers.concat(this.state.users).concat(this.state.invites)}
+                        excludedUsers={excludedUsers}
                         onUserSelected={(user) => {
                             var newUsers = this.state.sendInviteUsers.splice(0);
                             newUsers.push(user);
@@ -622,7 +635,7 @@ class Group extends Component {
                 <Grid key={"0"} item xs={3} style={{"textAlign": "center"}} />
             </Grid>
             {
-                (this.state.showEvents)? (<Calendar key={"events"} mutable={true} groupName={this.props.groupName} />): 
+                (this.state.showEvents)? (<Calendar key={"events"} mutable={this.state.writable} groupName={this.props.groupName} />): 
                     <Calendar key={"memberEvents"} mutable={false} events={this.state.memberEvents} />
             }
         </div>);

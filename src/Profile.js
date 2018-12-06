@@ -220,9 +220,11 @@ class Profile extends React.Component {
         "fields": response,
         "user": response
       });
-      Storage.get(response.picKey.substr(7), { level: 'public' })
-      .then(picResult => this.setState({ "picUrl": picResult }))
-      .catch(err => console.error("GET PIC ERR: " + err));
+      if (response.picKey != null) {
+        Storage.get(response.picKey.substr(7), { level: 'public' })
+        .then(picResult => this.setState({ "picUrl": picResult }))
+        .catch(err => console.error("GET PIC ERR: " + err));
+      }
       if (response.school != null) {
         Storage.get(response.school.picKey.substr(7), { level: 'public' })
         .then(picResult => {console.log("SCHOOL PIC URL: ", picResult); this.setState({ "schoolPicUrl": picResult }) })
@@ -559,7 +561,7 @@ class Profile extends React.Component {
                   <div style={{"textAlign": "center"}} className={(this.state.editing)? classes.gone: classes.visible}>
                     <Button variant="fab" color="primary" 
                       aria-label="Edit" className={classes.button}
-                      onClick={() => {this.setState({editing: true})}}>
+                      onClick={() => {this.setState({editing: true, fields: JSON.parse(JSON.stringify(this.state.fields))})}}>
                       <EditIcon />
                     </Button>
                   </div>

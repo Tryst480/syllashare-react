@@ -1,0 +1,17 @@
+projects:
+  SyllaShare:
+    schemaPath: src\graphql\schema.json
+    includes:
+      - src\graphql\**\*.js
+    excludes:
+      - ./amplify/**
+    extensions:
+      amplify:
+        graphQLApiId: fkw3suw7avbsdc7xhoj3qengem
+        codeGenTarget: javascript
+        generatedFileName: ''
+        docsFilePath: src\graphql
+        region: us-west-2
+      endpoints:
+        prod: >-
+          https://ufbqzngurjeejp6wimjbohw6xe.appsync-api.us-west-2.amazonaws.com/graphql

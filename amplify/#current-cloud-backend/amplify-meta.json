@@ -1,0 +1,26 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "syllasharereact-20181108103817-authRole",
+      "UnauthRoleArn": "arn:aws:iam::755427112052:role/syllasharereact-20181108103817-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::755427112052:role/syllasharereact-20181108103817-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "syllasharereact-20181108103817-deployment",
+      "UnauthRoleName": "syllasharereact-20181108103817-unauthRole",
+      "StackName": "syllasharereact-20181108103817",
+      "StackId": "arn:aws:cloudformation:us-west-2:755427112052:stack/syllasharereact-20181108103817/74a50f10-e385-11e8-9113-067794494828"
+    }
+  },
+  "api": {
+    "SyllaShare": {
+      "service": "AppSync",
+      "output": {
+        "securityType": "API_KEY",
+        "GraphQLAPIIdOutput": "fkw3suw7avbsdc7xhoj3qengem",
+        "GraphQLAPIEndpointOutput": "https://ufbqzngurjeejp6wimjbohw6xe.appsync-api.us-west-2.amazonaws.com/graphql",
+        "GraphQLAPIKeyOutput": "da2-qmq45f4bwjefxcgzw5ljcglnry"
+      },
+      "lastPushTimeStamp": "2018-11-08T18:39:48.233Z"
+    }
+  }
+}

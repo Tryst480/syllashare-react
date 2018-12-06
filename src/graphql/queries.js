@@ -33,6 +33,7 @@ export const getGroups = `query GetGroups {
         groupName
         classID
       }
+      courseID
     }
   }
 }
@@ -69,6 +70,7 @@ export const getGroup = `query GetGroup($groupName: String!) {
         groupName
         classID
       }
+      courseID
     }
   }
 }
@@ -135,6 +137,10 @@ export const getClasses = `query GetClasses($courseID: String!) {
     term
     year
     timeStr
+    group {
+      accepted
+      writable
+    }
   }
 }
 `;
@@ -151,6 +157,10 @@ export const getClass = `query GetClass($classID: String!) {
     term
     year
     timeStr
+    group {
+      accepted
+      writable
+    }
   }
 }
 `;
@@ -167,6 +177,10 @@ export const getUserClasses = `query GetUserClasses($userID: String!) {
     term
     year
     timeStr
+    group {
+      accepted
+      writable
+    }
   }
 }
 `;

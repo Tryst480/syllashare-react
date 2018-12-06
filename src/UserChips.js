@@ -73,11 +73,13 @@ class UserChips extends Component {
         for (var user of users) {
             console.log("GET PROF PIC: ", user);
             if (user.picKey != null && user.picSigned == null && this.state.picMap[user.id] == null) {
-                var uid = user.id;
                 Storage.get(user.picKey.substr(7), { level: 'public' })
-                    .then(picResult => {
-                        this.setState({ "picMap": update(this.state.picMap, { [uid]: {$set: picResult}}) });
-                    })
+                    .then((function(userID, picResult) {
+                        var picMap = this.state.picMap;
+                        console.log("SETTING: ", userID, "-", picResult);
+                        picMap[userID] = picResult;
+                        this.setState({ "picMap": picMap });
+                    }).bind(this, user.id))
                     .catch(err => console.error("GET PIC ERR: " + err));
             }
         }
