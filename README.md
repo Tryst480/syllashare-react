@@ -1,7 +1,7 @@
 # SyllaShare React
 ### [Visit The Website](https://syllashare.com)
 
-The web app for SyllaShare built entirely in React!  The app uses material design for all UI elements which are populated through communication over ES6 fetch, AWS AppSync, and AWS Cognito.
+The web app for SyllaShare is built entirely in React!  The app uses material design for all UI elements which are populated through communication over ES6 fetch, AWS AppSync, and AWS Cognito.
 
 ## Instructions
 ### Running
