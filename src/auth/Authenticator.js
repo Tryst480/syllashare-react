@@ -5,11 +5,12 @@ import Login from './Login';
 import SignUp from './SignUp';
 import Code from './Code';
 import ForgotPwd from './ForgotPwd';
-import Amplify, { Auth, API, Hub } from 'aws-amplify';
 import { GcpExports, AwsExports } from '../cloud/CloudExports';
 import GoogleLogin from 'react-google-login';
-import BackendExports from '../BackendExports';
+import Amplify, { Auth, Hub, API, graphqlOperation } from 'aws-amplify';
+import * as mutations from '../graphql/mutations';
 
+API.configure(AwsExports);
 Amplify.configure(AwsExports);
 
 const styles = theme => ({
@@ -80,6 +81,7 @@ class Authenticator extends Component {
                 //Check if a google user is logged in
                 this.googleSignIn().catch(() => {
                     this.userPoolSignIn().catch(() => {
+                        console.log("DEFAULT SIGN IN");
                         this.signIn(null, null).catch((err) => {
                             console.log("No sign in methods worked!");
                         });
@@ -95,21 +97,10 @@ class Authenticator extends Component {
     onGoogleSignIn(gs) {
         this.gAuth.isSignedIn.listen(() => {
             this.googleSignIn().then((syllaToken) => {
-                fetch(BackendExports.Url + '/api/exchangegoogle', 
-                {
-                    method: 'POST',
-                    headers: new Headers({
-                        "authorization": syllaToken
-                    }),
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        code: gs.code
-                    })
-                })
-                .then((response) => {
-                    if (response.ok) {
-                        console.log("REFRESH TOKEN SUBMITTED");
-                    }
+                API.graphql(graphqlOperation(mutations.exchangeGoogleCode, { "code": gs.code })).then(() => {
+                    console.log("REFRESH TOKEN SUBMITTED");
+                }).catch((err) => {
+                    console.error("ExchangeGoogleCode error:", err);
                 });
             });
         });
@@ -151,6 +142,7 @@ class Authenticator extends Component {
         return new Promise((resolve, reject) => {
             Auth.currentSession()
             .then(session => {
+                console.log("USER POOL SIGN IN");
                 this.getSyllaToken().then((syllaData) => {
                     var provider = "cognito";
                     this.props.onAuthenticated(syllaData["token"], syllaData["userID"], provider);
@@ -170,6 +162,7 @@ class Authenticator extends Component {
     signIn(provider, token) {
         return new Promise((resolve, reject) => {
             if (provider == null) {
+                console.log("SIGNING IN");
                 this.getSyllaToken().then((syllaData) => {
                     this.setState({
                         loading: false,
@@ -187,6 +180,7 @@ class Authenticator extends Component {
                         token: token
                     }
                 ).then(() => {
+                    console.log("FEDERATED SIGN IN");
                     this.getSyllaToken().then((syllaData) => {
                         this.setState({
                             loading: false,
@@ -204,11 +198,11 @@ class Authenticator extends Component {
     //Exchanges federated identity token for a syllashare token that is easier for the backend to use
     getSyllaToken() {
         return new Promise((resolve, reject) => {
-            API.put('SyllaShare', '/exchangetoken').then(response => {
-                console.log("USERID: ", response["userID"]);
-                resolve( { "token": response["token"], "userID": response["userID"] } );
-            }).catch(error => {
-                console.log(error);
+            API.graphql(graphqlOperation(mutations.exchangeToken)).then((resp) => {
+                let data = resp.data.exchangeToken;
+                resolve( { "token": data["token"], "userID": data["userID"] } );
+            }).catch((err) => {
+                console.error("ExchangeToken error:", err);
             });
         });
     }

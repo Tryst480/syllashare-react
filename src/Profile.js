@@ -72,6 +72,8 @@ const styles = theme => ({
     width: '100%',
     marginTop: theme.spacing.unit * 3,
     overflowX: 'auto',
+    overflowY: 'hidden',
+    paddingBottom: '200px'
   },
   calButton: {
     "text-align": "center",
@@ -154,25 +156,12 @@ class Profile extends React.Component {
 
   //Called on component initialization
   componentWillMount() {
-    var syllaToken = this.props["syllaToken"];
-    fetch(BackendExports.Url + '/api/getschools', 
-    {
-        method: 'GET',
-        headers: new Headers({
-            "authorization": syllaToken
-        }),
-        credentials: 'include'
-    })
-    .then((response) => {
-      return response.json();
-    })
-    .then((response) => {
-      console.log("Schools:", response);
-      this.setState({
-        "schools": response
-      });
+   API.graphql(graphqlOperation(queries.getSchools)).then((resp) => {
+        this.setState({
+            "schools": resp.data.getSchools
+        });
     }).catch((err) => {
-      console.error("GetUser Ex: ", err);
+        console.error("GetSchools Ex: ", err);
     });
     this.getUserData(this.props["syllaToken"]);
   }
@@ -199,41 +188,32 @@ class Profile extends React.Component {
     this.setState({
       "fields": null,
       "user": null
-    })
-    var url = BackendExports.Url + '/api/getuser';
+    });
+    var user = {};
     if (!this.props.thisUser) {
-      url += "?id=" + this.props.userID;
+      user.userID = this.props.userID;
     }
-    fetch(url, 
-    {
-        method: 'GET',
-        headers: new Headers({
-            "authorization": syllaToken
-        }),
-        credentials: 'include'
-    })
-    .then((response) => {
-      return response.json();
-    })
-    .then((response) => {
+    API.graphql(graphqlOperation(queries.getUser, user)).then((resp) => {
+      var user = resp.data.getUser;
+      console.log("DATA: ", JSON.stringify(user, null, 4));
       this.setState({
-        "fields": response,
-        "user": response
+        "fields": user,
+        "user": user
       });
-      if (response.picKey != null) {
-        Storage.get(response.picKey.substr(7), { level: 'public' })
+      if (user.picKey != null) {
+        Storage.get(user.picKey.substr(7), { level: 'public' })
         .then(picResult => this.setState({ "picUrl": picResult }))
         .catch(err => console.error("GET PIC ERR: " + err));
       }
-      if (response.school != null) {
-        Storage.get(response.school.picKey.substr(7), { level: 'public' })
+      if (user.school != null) {
+        Storage.get(user.school.picKey.substr(7), { level: 'public' })
         .then(picResult => {console.log("SCHOOL PIC URL: ", picResult); this.setState({ "schoolPicUrl": picResult }) })
         .catch(err => console.error("GET SCHOOL PIC ERR: " + err));
       } else {
         this.setState({ "schoolPicUrl": null })
       }
     }).catch((err) => {
-      console.error("GetUser Ex: ", err);
+        console.error("GetUser Ex: ", err);
     });
     this.getUserEvents();
   }
@@ -265,45 +245,22 @@ class Profile extends React.Component {
       }
     }
     console.log("CHANGED BODY: ", changedBody);
-    fetch(BackendExports.Url + '/api/modifyuser', 
-    {
-        method: 'POST',
-        headers: new Headers({
-            "authorization": this.props["syllaToken"]
-        }),
-        credentials: 'include',
-        body: JSON.stringify(changedBody)
-    })
-    .then((response) => {
-      if (response.ok) {
-        var newUser = this.state.user;
-        for (var key in changedBody) {
-          newUser[key] = changedBody[key];
-        }
-        this.setState({
-          updating: false,
-          editing: false,
-          user: newUser
-        });
-      } else {
-        return response.json();
+    API.graphql(graphqlOperation(mutations.modifyUser)).then(() => {
+      var newUser = this.state.user;
+      for (var key in changedBody) {
+        newUser[key] = changedBody[key];
       }
-    })
-    .then((response) => {
-      if (response != null) {
-        this.setState({
-          updating: false,
-          errorMsg: response["msg"]
-        });
-      }
-    })
-    .catch((err) => {
-      console.error("GetUser Ex: ", err);
+      this.setState({
+        updating: false,
+        editing: false,
+        user: newUser
+      });
+    }).catch((err) => {
+        console.error("GetSchools Ex: ", err);
     });
   }
 
   onEditCancel() {
-    console.log("ON EDIT CANCEL");
     this.setState({fields: this.state.user, editing: false });
     Storage.get(this.state.user.school.picKey.substr(7), { level: 'public' })
         .then(picResult => this.setState({ "schoolPicUrl": picResult }))
@@ -315,22 +272,11 @@ class Profile extends React.Component {
   }
 
   onGoogleSignIn(gs) {
-    fetch(BackendExports.Url + '/api/exchangegoogle', 
-    {
-        method: 'POST',
-        headers: new Headers({
-            "authorization": this.props.syllaToken
-        }),
-        credentials: 'include',
-        body: JSON.stringify({
-            code: gs.code
-        })
-    })
-    .then((response) => {
-        if (response.ok) {
-            console.log("REFRESH TOKEN SUBMITTED");
-        }
-    })
+    API.graphql(graphqlOperation(mutations.exchangeGoogleCode, { "code": gs.code })).then(() => {
+      console.log("REFRESH TOKEN SUBMITTED");
+    }).catch((err) => {
+        console.error("ExchangeGoogleCode error:", err);
+    });
   }
 
   handleEditProfileImgClose() {
@@ -588,41 +534,6 @@ class Profile extends React.Component {
                 </Grow>
               </Grid>
             </div>): <div />
-          }
-          {
-            (this.props.thisUser)? (
-            <Grid item xs={3}>
-              <Paper className={classes.root}>
-                <Table>
-                  <TableHead>
-                      <TableRow>
-                        <TableCell className={classes.calButton}>Google Calendar</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <div style={{"textAlign": "center"}}>
-                          { (this.state.user.providers.indexOf("google") < 0)
-                            ? <GoogleLogin
-                                className={classes.googleLogin}
-                                clientId={GcpExports.clientID}
-                                responseType="code"
-                                accessType="offline"
-                                scope="profile access https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events"
-                                uxMode="redirect"
-                                redirect_uri="postmessage"
-                                onSuccess={this.onGoogleSignIn.bind(this)}
-                                onFailure={(e) => {console.error("Google sign in failure: ", e)}}>
-                                <Button variant="contained" color="primary">
-                                    Link
-                                </Button>
-                              </GoogleLogin>
-                            : <TableCell className={classes.calButton}><Button variant="contained" color="secondary">Unlink</Button></TableCell>
-                          }
-                        </div>
-                      </TableRow>
-                  </TableHead>
-                </Table>
-              </Paper>
-            </Grid>): <div />
           }
           <Grid item xs={24}>
             <Grid container spacing={24}>

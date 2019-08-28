@@ -5,8 +5,9 @@ import { fade } from '@material-ui/core/styles/colorManipulator';
 import { TextField, withStyles, Switch, Avatar } from '@material-ui/core';
 import BackendExports from './BackendExports';
 import classNames from 'classnames';
-import Amplify, { Storage, Auth, Hub, API } from 'aws-amplify';
+import Amplify, { Storage, Auth, Hub, API, graphqlOperation } from 'aws-amplify';
 import { AwsExports, GcpExports } from './cloud/CloudExports';
+import * as queries from './graphql/queries';
 import update from 'react-addons-update';
 Amplify.configure(AwsExports);
 
@@ -39,21 +40,10 @@ class UserSearcher extends React.Component {
   // You already implemented this logic above, so just use it.
   onSuggestionsFetchRequested = ({ value }) => {
     if (value.length > 0) {
-      fetch(BackendExports.Url + '/api/searchusers?query=' + value, 
-      {
-          method: 'GET',
-          headers: new Headers({
-              "authorization": this.props.syllaToken
-          }),
-          credentials: 'include'
-      })
-      .then((response) => {
-        return response.json();
-      })
-      .then((response) => {
-        console.log("RESPONSE: ", response);
+      API.graphql(graphqlOperation(queries.searchUsers, { "query": value })).then((resp) => {
+        var users = resp.data.searchUsers;
         var searchUsers = [];
-        for (var user of response) {
+        for (var user of users) {
           if (this.props.excludedUsers[user.username] == null) {
             searchUsers.push(user);
             console.log("ITER USER: ", user.pickey);
@@ -71,10 +61,10 @@ class UserSearcher extends React.Component {
           searchSuggestions: searchUsers
         });
       }).catch((err) => {
-        console.error("GetUser Ex: ", err);
-        this.setState({
-          searchSuggestions: []
-        });
+          console.error("SearchUsers error:", err);
+          this.setState({
+            searchSuggestions: []
+          });
       });
     }
   };

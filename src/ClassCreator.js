@@ -76,46 +76,22 @@ class ClassCreator extends Component {
     }
 
     componentWillMount() {
-        var syllaToken = this.props["syllaToken"];
-        fetch(BackendExports.Url + '/api/getuser', 
-            {
-                method: 'GET',
-                headers: new Headers({
-                    "authorization": syllaToken
-                }),
-                credentials: 'include'
-            })
-            .then((response) => {
-                return response.json();
-            })
-            .then((response) => {
-                if (response.school != null) {
-                    this.setState({
-                        "school": response.school
-                    });
-                }
-            }).catch((err) => {
-              console.error("GetUser Ex: ", err);
-            });
+        API.graphql(graphqlOperation(queries.getUser)).then((resp) => {
+            if (resp.data.getUser.school != null) {
+                this.setState({
+                    "school": resp.data.getUser.school
+                });
+            }
+        }).catch((err) => {
+            console.error("GetUser Ex: ", err);
+        });
 
-        fetch(BackendExports.Url + '/api/getschools', 
-        {
-            method: 'GET',
-            headers: new Headers({
-                "authorization": syllaToken
-            }),
-            credentials: 'include'
-        })
-        .then((response) => {
-            return response.json();
-        })
-        .then((response) => {
-            console.log("Schools:", response);
+        API.graphql(graphqlOperation(queries.getSchools)).then((resp) => {
             this.setState({
-                "schools": response
+                "schools": resp.data.getSchools
             });
         }).catch((err) => {
-            console.error("GetSchools Ex: ", err);
+            console.error("GetUser Ex: ", err);
         });
     }
 

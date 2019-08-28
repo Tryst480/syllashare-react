@@ -1,4 +1,4 @@
-// eslint-disable
+/* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
 export const createGroup = `mutation CreateGroup(
@@ -31,8 +31,15 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -57,8 +64,15 @@ export const joinGroup = `mutation JoinGroup($groupName: String!) {
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -77,8 +91,15 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!, $kickUserID:
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -103,8 +124,15 @@ export const leaveGroup = `mutation LeaveGroup($groupName: String!, $kickUserID:
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -131,8 +159,15 @@ export const inviteToGroup = `mutation InviteToGroup(
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -157,8 +192,15 @@ export const inviteToGroup = `mutation InviteToGroup(
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -207,8 +249,15 @@ export const createMessage = `mutation CreateMessage(
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -252,9 +301,21 @@ export const createClass = `mutation CreateClass(
     course {
       id
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     teacher {
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     term
     year
@@ -262,6 +323,43 @@ export const createClass = `mutation CreateClass(
     group {
       accepted
       writable
+      group {
+        name
+        readPrivate
+        writePrivate
+        users {
+          id
+          username
+          firstName
+          lastName
+          picKey
+          school {
+            name
+            city
+            state
+            picKey
+          }
+          accepted
+          writable
+          providers
+        }
+        chats {
+          id
+          name
+          subject
+          groupName
+        }
+        events {
+          id
+          name
+          time
+          mins
+          priority
+          groupName
+          classID
+        }
+        courseID
+      }
     }
   }
 }
@@ -305,6 +403,41 @@ export const deleteEvents = `mutation DeleteEvents(
       classID
     }
     groupName
+  }
+}
+`;
+export const modifyUser = `mutation ModifyUser(
+  $username: String
+  $firstName: String
+  $lastName: String
+  $school: String
+) {
+  modifyUser(
+    username: $username
+    firstName: $firstName
+    lastName: $lastName
+    school: $school
+  )
+}
+`;
+export const exchangeGoogleCode = `mutation ExchangeGoogleCode($code: String) {
+  exchangeGoogleCode(code: $code) {
+    idToken
+    accessToken
+  }
+}
+`;
+export const exchangeToken = `mutation ExchangeToken {
+  exchangeToken {
+    token
+    userID
+    expEpochMillis
+  }
+}
+`;
+export const updateProfilePic = `mutation UpdateProfilePic($img: String) {
+  updateProfilePic(img: $img) {
+    picKey
   }
 }
 `;

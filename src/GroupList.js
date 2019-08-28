@@ -102,6 +102,7 @@ class GroupList extends Component {
             "groups": groups,
             "addingGroup": false
         });
+        this.props.onGroupSelected(group.name);
     }
 
     acceptInvite(invite) {
@@ -234,7 +235,11 @@ class GroupList extends Component {
                         return (
                         <TableRow key={row.id}  onClick={() => {this.props.onGroupSelected(row.name)}}>
                             <TableCell component="th" scope="row">
-                            {row.name}
+                                <a style={{
+                                    cursor: 'pointer',
+                                    color: 'blue',
+                                    'text-decoration': 'underline'
+                                }}>{row.name}</a>
                             </TableCell>
                             <TableCell>{row.visibility}</TableCell>
                             <TableCell>{row.members}</TableCell>

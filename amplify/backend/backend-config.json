@@ -1,0 +1,10 @@
+{
+    "api": {
+        "SyllaShare": {
+            "service": "AppSync",
+            "output": {
+                "securityType": "API_KEY"
+            }
+        }
+    }
+}

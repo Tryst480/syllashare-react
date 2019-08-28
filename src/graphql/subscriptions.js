@@ -1,4 +1,4 @@
-// eslint-disable
+/* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
 export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
@@ -15,8 +15,15 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -41,8 +48,15 @@ export const subJoinGroup = `subscription SubJoinGroup($groupName: String!) {
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -61,8 +75,15 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -87,8 +108,15 @@ export const subLeaveGroup = `subscription SubLeaveGroup($groupName: String!) {
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -107,8 +135,15 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -133,8 +168,15 @@ export const subInviteToGroup = `subscription SubInviteToGroup($groupName: Strin
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -153,8 +195,15 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -179,8 +228,15 @@ export const subUserInviteToGroup = `subscription SubUserInviteToGroup($userID: 
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }
@@ -211,8 +267,15 @@ export const subCreateMessage = `subscription SubCreateMessage($chatID: String!)
       firstName
       lastName
       picKey
+      school {
+        name
+        city
+        state
+        picKey
+      }
       accepted
       writable
+      providers
     }
   }
 }

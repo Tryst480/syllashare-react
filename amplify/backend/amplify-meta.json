@@ -15,12 +15,14 @@
     "SyllaShare": {
       "service": "AppSync",
       "output": {
-        "securityType": "API_KEY",
+        "securityType": "AWS_IAM",
         "GraphQLAPIIdOutput": "fkw3suw7avbsdc7xhoj3qengem",
         "GraphQLAPIEndpointOutput": "https://ufbqzngurjeejp6wimjbohw6xe.appsync-api.us-west-2.amazonaws.com/graphql",
-        "GraphQLAPIKeyOutput": "da2-qmq45f4bwjefxcgzw5ljcglnry"
+        "additionalAuthenticationProviders": [],
+        "name": "SyllaShare",
+        "region": "us-west-2"
       },
-      "lastPushTimeStamp": "2018-11-08T18:39:48.233Z"
+      "lastPushTimeStamp": "2019-08-27T23:30:03.706Z"
     }
   }
 }

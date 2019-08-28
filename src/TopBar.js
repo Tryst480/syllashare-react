@@ -319,9 +319,6 @@ class TopBar extends React.Component {
         {renderInviteMenu}
         <AppBar position="fixed">
           <Toolbar>
-            <IconButton className={classes.menuButton} color="inherit" aria-label="Open drawer">
-              <MenuIcon />
-            </IconButton>
             <Typography className={classes.title} onClick={this.props.onTitleClicked} variant="h6" color="inherit" noWrap>
               SyllaShare
             </Typography>
@@ -360,11 +357,6 @@ class TopBar extends React.Component {
                 aria-haspopup="true">
                 <Badge badgeContent={this.state.invites.length} color="secondary">
                   <MailIcon />
-                </Badge>
-              </IconButton>
-              <IconButton color="inherit">
-                <Badge badgeContent={0} color="secondary">
-                  <NotificationsIcon />
                 </Badge>
               </IconButton>
             </div>

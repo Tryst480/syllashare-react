@@ -1,4 +1,4 @@
-// eslint-disable
+/* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
 export const getGroups = `query GetGroups {
@@ -15,8 +15,15 @@ export const getGroups = `query GetGroups {
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -52,8 +59,15 @@ export const getGroup = `query GetGroup($groupName: String!) {
         firstName
         lastName
         picKey
+        school {
+          name
+          city
+          state
+          picKey
+        }
         accepted
         writable
+        providers
       }
       chats {
         id
@@ -99,6 +113,7 @@ export const getMessages = `query GetMessages($chatID: String!) {
       }
       accepted
       writable
+      providers
     }
   }
 }
@@ -130,9 +145,21 @@ export const getClasses = `query GetClasses($courseID: String!) {
     course {
       id
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     teacher {
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     term
     year
@@ -140,6 +167,43 @@ export const getClasses = `query GetClasses($courseID: String!) {
     group {
       accepted
       writable
+      group {
+        name
+        readPrivate
+        writePrivate
+        users {
+          id
+          username
+          firstName
+          lastName
+          picKey
+          school {
+            name
+            city
+            state
+            picKey
+          }
+          accepted
+          writable
+          providers
+        }
+        chats {
+          id
+          name
+          subject
+          groupName
+        }
+        events {
+          id
+          name
+          time
+          mins
+          priority
+          groupName
+          classID
+        }
+        courseID
+      }
     }
   }
 }
@@ -150,9 +214,21 @@ export const getClass = `query GetClass($classID: String!) {
     course {
       id
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     teacher {
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     term
     year
@@ -160,6 +236,43 @@ export const getClass = `query GetClass($classID: String!) {
     group {
       accepted
       writable
+      group {
+        name
+        readPrivate
+        writePrivate
+        users {
+          id
+          username
+          firstName
+          lastName
+          picKey
+          school {
+            name
+            city
+            state
+            picKey
+          }
+          accepted
+          writable
+          providers
+        }
+        chats {
+          id
+          name
+          subject
+          groupName
+        }
+        events {
+          id
+          name
+          time
+          mins
+          priority
+          groupName
+          classID
+        }
+        courseID
+      }
     }
   }
 }
@@ -170,9 +283,21 @@ export const getUserClasses = `query GetUserClasses($userID: String!) {
     course {
       id
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     teacher {
       name
+      school {
+        name
+        city
+        state
+        picKey
+      }
     }
     term
     year
@@ -180,6 +305,43 @@ export const getUserClasses = `query GetUserClasses($userID: String!) {
     group {
       accepted
       writable
+      group {
+        name
+        readPrivate
+        writePrivate
+        users {
+          id
+          username
+          firstName
+          lastName
+          picKey
+          school {
+            name
+            city
+            state
+            picKey
+          }
+          accepted
+          writable
+          providers
+        }
+        chats {
+          id
+          name
+          subject
+          groupName
+        }
+        events {
+          id
+          name
+          time
+          mins
+          priority
+          groupName
+          classID
+        }
+        courseID
+      }
     }
   }
 }
@@ -212,6 +374,53 @@ export const getTerm = `query GetTerm($schoolName: String!, $year: String!, $ter
   getTerm(schoolName: $schoolName, year: $year, term: $term) {
     start
     end
+  }
+}
+`;
+export const getSchools = `query GetSchools {
+  getSchools {
+    name
+    city
+    state
+    picKey
+  }
+}
+`;
+export const getUser = `query GetUser($userID: String) {
+  getUser(userID: $userID) {
+    id
+    username
+    firstName
+    lastName
+    picKey
+    school {
+      name
+      city
+      state
+      picKey
+    }
+    accepted
+    writable
+    providers
+  }
+}
+`;
+export const searchUsers = `query SearchUsers($query: String) {
+  searchUsers(query: $query) {
+    id
+    username
+    firstName
+    lastName
+    picKey
+    school {
+      name
+      city
+      state
+      picKey
+    }
+    accepted
+    writable
+    providers
   }
 }
 `;

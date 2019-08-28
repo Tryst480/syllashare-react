@@ -668,21 +668,25 @@ class Calendar extends Component {
     render() {
         const { classes } = this.props;
         return (
-            <div>
-            {this.renderModal()}
-
-                <BigCalendar
-                selectable
-                style={{ height: '700px' }}
-                events={this.state.events}
-                step={60}//in minuets
-                defaultDate={(this.props.startTime != null)? new Date(this.props.startTime): new Date()}
-                popup={true}
-                popupOffset={30}
-                onSelectEvent={this.handleSelectEvent.bind(this)}
-                onSelectSlot={this.handleSelectEmpty.bind(this)}
-                eventPropGetter={this.eventStyleGetter.bind(this)}
-            />
+            <div style={{
+                paddingBottom: 50
+            }}>
+                {this.renderModal()}
+                <div style={{
+                    marginBottom: 100
+                }}>
+                    <BigCalendar
+                    selectable
+                    style={{ height: '700px' }}
+                    events={this.state.events}
+                    step={60}//in minuets
+                    defaultDate={(this.props.startTime != null)? new Date(this.props.startTime): new Date()}
+                    popup={true}
+                    popupOffset={30}
+                    onSelectEvent={this.handleSelectEvent.bind(this)}
+                    onSelectSlot={this.handleSelectEmpty.bind(this)}
+                    eventPropGetter={this.eventStyleGetter.bind(this)} />
+                </div>
             <div style={{"textAlign": "center"}}>
                 {
                     ((this.props.canSave == null && (this.state.updatedEvents.length > 0 || this.state.deletedEventIDs.length > 0)) || this.props.canSave)?

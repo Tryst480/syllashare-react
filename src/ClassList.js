@@ -169,7 +169,11 @@ class ClassList extends Component {
                             return (
                             <TableRow key={c.id} onClick={() => {console.log("CS:", c.id); this.props.onClassSelected(c.id)}}>
                                 <TableCell component="th" scope="row">
-                                    {c.course.name}
+                                    <a style={{
+                                        cursor: 'pointer',
+                                        color: 'blue',
+                                        'text-decoration': 'underline'
+                                    }}>{c.course.name}</a>
                                 </TableCell>
                                 <TableCell>{c.teacher.name}</TableCell>
                                 <TableCell>{c.timeStr}</TableCell>
